@@ -2,8 +2,8 @@
 #include "pieces.hpp"
 const Pixel blackSquare = newPixel(153, 87, 81, 255);
 const Pixel whiteSquare = newPixel(241, 233, 232, 255);
-
-bool drawBoard(SDL_Renderer *renderer, int width, int height) {
+const Pixel clickedSquare = newPixel(134, 151, 110, 255);
+bool drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked) {
   int squareWidth = width / 8;
   int squareHeight = height / 8;
   for (int i = 0; i < width; i += squareWidth) {
@@ -24,6 +24,19 @@ bool drawBoard(SDL_Renderer *renderer, int width, int height) {
       SDL_RenderFillRect(renderer, rect);
     }
   }
+  for (int x : clicked) {
+    int row = x / 8;
+    int col = x % 8;
+    SDL_FRect tmp;
+    SDL_FRect *rect = &tmp;
+    rect->x = col * squareWidth;
+    rect->y = row * squareHeight;
+    rect->w = squareWidth;
+    rect->h = squareHeight;
+    SDL_SetRenderDrawColor(renderer, clickedSquare.red, clickedSquare.green, clickedSquare.blue, clickedSquare.alpha);
+    SDL_RenderFillRect(renderer, rect);
+  }
+
   return true;
 }
 

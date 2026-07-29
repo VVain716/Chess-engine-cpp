@@ -34,7 +34,7 @@ bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int w
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
     // draws board
-    drawBoard(renderer, width, height);
+    drawBoard(renderer, width, height, {});
     board->render_board(renderer, width, height);
 
     int frame_begin = SDL_GetPerformanceCounter();

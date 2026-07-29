@@ -6,8 +6,8 @@ bool king_check(Board *board, int kingpos) {
   bool is_white = (board->get_piece(king_row*8+king_col) == WHITE_KING);
   
   // check whether a knight is attacking
-  vector<pair<int, int>> knight_moves = {{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}};
-  for (pair<int, int> x : knight_moves) {
+  std::vector<std::pair<int, int>> knight_moves = {{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}};
+  for (std::pair<int, int> x : knight_moves) {
     int curr_row = king_row + x.first;
     int curr_col = king_col + x.second;
     if (curr_row < 0 || curr_row > 7 || curr_col < 0 || curr_col > 7) {continue;}
@@ -41,9 +41,9 @@ bool king_check(Board *board, int kingpos) {
   }
 
   // check bishops and queens
-  vector<pair<int, int>> diagonal_moves = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+  std::vector<std::pair<int, int>> diagonal_moves = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
-  for (pair<int, int> move : diagonal_moves) {
+  for (std::pair<int, int> move : diagonal_moves) {
     int curr_row = king_row; int curr_col = king_col;
     while (1){
       curr_row += move.first;
@@ -66,8 +66,8 @@ bool king_check(Board *board, int kingpos) {
   }
   
   // check whether we are hit by a rook or a king
-  vector<pair<int, int>> orthogonal_moves = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
-  for (pair<int, int> move : orthogonal_moves) {
+  std::vector<std::pair<int, int>> orthogonal_moves = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+  for (std::pair<int, int> move : orthogonal_moves) {
     int curr_row = king_row; int curr_col = king_col;
     while (1){ 
       curr_row += move.first;
@@ -112,9 +112,27 @@ bool king_check(Board *board, int kingpos) {
 }
 
 
-vector<int> get_legal_moves(int pos, Board *board) {
-  vector<int> res;
+std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int black_king) {
+  std::vector<int> res;
   int curr_row = pos / 8;
   int curr_col = pos % 8;
-  int piece = 
+  int piece = board->get_piece(pos);
+  if (piece == 0) {
+    return res;
+  }
+  else if (piece <= 6) {
+    if (piece == WHITE_PAWN) {
+      // for now, ignore the two square constraint
+      
+      // move up if there is no piece 
+      if (curr_row - 1 >= 0 && board->get_piece((curr_row - 1)*8+curr_col) == EMPTY) {
+        res.push_back((curr_row - 1)*8+curr_col);
+      }
+    }
+  }
+
+  else {
+
+  }
+  return res;
 }
