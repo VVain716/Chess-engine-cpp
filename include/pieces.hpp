@@ -40,23 +40,5 @@ namespace Black {
 
 SDL_Texture *get_texture(int val);
 
-class Board {
-  // 0 = empty, 1 = white pawn, 2 = white knight, 3 = white bishop, 4 = white rook, 5 = white queen, 6 = white king, add 6 to each piece value to make it black
-private:
-  int board[8][8] = 
-  { {10, 8, 9, 11, 12, 9, 8, 10},
-    {7, 7, 7, 7, 7, 7, 7, 7},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {1, 1, 1, 1, 1, 1, 1, 1},
-    {4, 2, 3, 5, 6, 3, 2, 4}
-  };
-public:
-  bool render_board(SDL_Renderer *renderer, int width, int height);
-  int get_piece(int val);
-  bool set_piece(int val, int new_piece);
-};
 
 #endif
