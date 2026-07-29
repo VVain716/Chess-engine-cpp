@@ -8,9 +8,6 @@ namespace White {
   SDL_Texture *rook = nullptr;
   SDL_Texture *queen = nullptr;
   SDL_Texture *king = nullptr;
-  
-  bool load_images();
-  bool destroy_images();
 }
 
 namespace Black {
@@ -20,10 +17,53 @@ namespace Black {
   SDL_Texture *rook = nullptr;
   SDL_Texture *queen = nullptr;
   SDL_Texture *king = nullptr;
-  
-  bool load_images();
-  bool destroy_images();
+
 }
+
+SDL_Texture *get_texture(int val) {
+  switch (val) {
+    case 1:
+      return White::pawn;
+      break;
+    case 2:
+      return White::knight;
+      break;
+    case 3:
+      return White::bishop;
+      break;
+    case 4:
+      return White::rook;
+      break;
+    case 5:
+      return White::queen;
+      break;
+    case 6:
+      return White::king;
+      break;
+    case 7:
+      return Black::pawn;
+      break;
+    case 8:
+      return Black::knight;
+      break;
+    case 9:
+      return Black::bishop;
+      break;
+    case 10:
+      return Black::rook;
+      break;
+    case 11:
+      return Black::queen;
+      break;
+    case 12:
+      return Black::king;
+      break;
+    default:
+      break;
+  }
+  return nullptr;
+}
+
 bool White::load_images(SDL_Renderer *renderer) {
   // expects pieces to be in file directory WHITE_PATH and pieces to be named pawn.png, bishop.png, etc.
   pawn = IMG_LoadTexture(renderer, WHITE_PATH "/pawn.png");
@@ -76,47 +116,7 @@ bool Board::render_board(SDL_Renderer *renderer, int width, int height) {
       rect->w = width / 8;
       rect->h = height / 8;
       // see what piece we have to render
-      SDL_Texture *s = nullptr;
-      switch (board[h][w]) {
-        case 1:
-          s = White::pawn;
-          break;
-        case 2:
-          s = White::knight;
-          break;
-        case 3:
-          s = White::bishop;
-          break;
-        case 4:
-          s = White::rook;
-          break;
-        case 5:
-          s = White::queen;
-          break;
-        case 6:
-          s = White::king;
-          break;
-        case 7:
-          s = Black::pawn;
-          break;
-        case 8:
-          s = Black::knight;
-          break;
-        case 9:
-          s = Black::bishop;
-          break;
-        case 10:
-          s = Black::rook;
-          break;
-        case 11:
-          s = Black::queen;
-          break;
-        case 12:
-          s = Black::king;
-          break;
-        default:
-          break;
-      }
+      SDL_Texture *s = get_texture(board[h][w]);
       if (s == nullptr) {
         continue;
       }
@@ -126,6 +126,16 @@ bool Board::render_board(SDL_Renderer *renderer, int width, int height) {
   return true;
 }
 
+int Board::get_piece(int val) {
+  int row = val / 8;
+  int col = val % 8;
+  return board[row][col];
+}
 
-
-
+bool Board::set_piece(int val, int new_piece) {
+  if (new_piece > 12 || new_piece < 0) {return false;}
+  int row = val / 8;
+  int col = val % 8;
+  board[row][col] = new_piece;
+  return true;
+}

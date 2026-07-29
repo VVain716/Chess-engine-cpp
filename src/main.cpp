@@ -3,6 +3,8 @@
 #include <SDL3_image/SDL_image.h>
 #include "board.hpp"
 #include "pieces.hpp"
+#include "animate.hpp"
+
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
 
@@ -19,6 +21,9 @@ int main() {
   if (!SDL_CreateWindowAndRenderer("chessboard", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer");
   }
+
+  SDL_SetRenderVSync(renderer, 1);
+
   White::load_images(renderer);
   Black::load_images(renderer);
   Board *board = new Board();
@@ -27,7 +32,11 @@ int main() {
     if (event.type == SDL_EVENT_QUIT) {
       break;
     }
-
+    else if (event.type == SDL_EVENT_KEY_UP) {
+      if (event.key.key == SDLK_SPACE) {
+        animate_move(renderer, 6*8+4, 4*8+4, board, WINDOW_WIDTH, WINDOW_HEIGHT); 
+      }
+    }
     // running loop
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
