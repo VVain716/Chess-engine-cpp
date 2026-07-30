@@ -120,19 +120,314 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
   if (piece == 0) {
     return res;
   }
-  else if (piece <= 6) {
+  bool is_white = (piece <= 6);
+
+
+  if (is_white) {
+    // pawn
     if (piece == WHITE_PAWN) {
-      // for now, ignore the two square constraint
-      
+      // check if the pawn can move two squares
+      if (curr_row == 0) {return res;}
+      else if (curr_row == 6 && board->get_piece((curr_row - 2)*8+curr_col) == EMPTY && board->get_piece((curr_row - 1)*8+curr_col) == EMPTY) {
+        res.push_back((curr_row - 2)*8+curr_col);
+        res.push_back((curr_row-1)*8+curr_col);
+      }
       // move up if there is no piece 
-      if (curr_row - 1 >= 0 && board->get_piece((curr_row - 1)*8+curr_col) == EMPTY) {
+      else if (curr_row - 1 >= 0 && board->get_piece((curr_row - 1)*8+curr_col) == EMPTY) {
         res.push_back((curr_row - 1)*8+curr_col);
+      }
+      
+      // handle cases where the pawn can capture
+      if (curr_col - 1 >= 0 && board->get_piece((curr_row-1)*8+curr_col-1) > WHITE_KING) {
+        res.push_back((curr_row-1)*8+curr_col-1);
+      }
+      if (curr_col + 1 < 8 && board->get_piece((curr_row-1)*8+curr_col+1) > WHITE_KING) {
+        res.push_back((curr_row-1)*8+curr_col+1);
+      }
+    }
+    // knight
+    else if (piece == WHITE_KNIGHT) {
+      std::vector<std::pair<int, int>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};
+      for (std::pair move : moves) {
+        int row = move.first + curr_row;
+        int col = move.second + curr_col;
+
+        // check if out of bounds
+        if (row < 0 || row > 7 || col < 0 || col > 7) {continue;}
+
+        if (board->get_piece(row*8+col) == EMPTY || board->get_piece(row*8+col) > WHITE_KING) {
+          res.push_back(row*8+col);
+        }
+      }
+    }
+
+    // bishop
+    else if (piece == WHITE_BISHOP) {
+      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            res.push_back(row*8+col);
+            break;
+          }
+        }
+      }
+    }
+
+
+    // rook -- very similar to bishop, just different set of moves
+    else if (piece == WHITE_ROOK) {
+      std::vector<std::pair<int, int>> moves = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            res.push_back(row*8+col);
+            break;
+          }
+        }
+      }
+    }
+    // queen -- very similar to rook and bishop 
+    else if (piece == WHITE_QUEEN) {
+      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            res.push_back(row*8+col);
+            break;
+          }
+        }
+      }
+    }
+      // king -- similar to the knights movement 
+    else if (piece == WHITE_KING) {
+      std::vector<std::pair<int, int>> moves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+      for (std::pair move : moves) {
+        int row = move.first + curr_row;
+        int col = move.second + curr_col;
+        
+        // check if out of bounds
+        if (row < 0 || row > 7 || col < 0 || col > 7) {continue;}
+
+        if (board->get_piece(row*8+col) == EMPTY || board->get_piece(row*8+col) > WHITE_KING) {
+          res.push_back(row*8+col);
+        }
       }
     }
   }
 
-  else {
 
+
+
+
+
+
+
+
+
+
+  //TODO: BLACK
+  else {
+    // pawn
+    if (piece == BLACK_PAWN) {
+      // check if the pawn can move two squares
+      if (curr_row == 7) {return res;}
+      else if (curr_row == 1 && board->get_piece((curr_row + 2)*8+curr_col) == EMPTY && board->get_piece((curr_row + 1)*8+curr_col) == EMPTY) {
+        res.push_back((curr_row + 2)*8+curr_col);
+        res.push_back((curr_row+1)*8+curr_col);
+      }
+      // move up if there is no piece 
+      else if (curr_row + 1 < 8 && board->get_piece((curr_row + 1)*8+curr_col) == EMPTY) {
+        res.push_back((curr_row + 1)*8+curr_col);
+      }
+      
+      // handle cases where the pawn can capture
+      if (curr_col + 1 >= 0 && board->get_piece((curr_row+1)*8+curr_col-1) <= WHITE_KING && board->get_piece((curr_row+1)*8+curr_col-1)) {
+        res.push_back((curr_row+1)*8+curr_col-1);
+      }
+      if (curr_col + 1 < 8 && board->get_piece((curr_row+1)*8+curr_col+1) <= WHITE_KING && board->get_piece((curr_row+1)*8+curr_col+1)) {
+        res.push_back((curr_row+1)*8+curr_col+1);
+      }
+    }
+    // knight
+    else if (piece == BLACK_KNIGHT) {
+      std::vector<std::pair<int, int>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};
+      for (std::pair move : moves) {
+        int row = move.first + curr_row;
+        int col = move.second + curr_col;
+
+        // check if out of bounds
+        if (row < 0 || row > 7 || col < 0 || col > 7) {continue;}
+
+        if (board->get_piece(row*8+col) <= WHITE_KING) {
+          res.push_back(row*8+col);
+        }
+      }
+    }
+
+    // bishop
+    else if (piece == BLACK_BISHOP) {
+      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            res.push_back(row*8+col);
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            break;
+          }
+        }
+      }
+    }
+
+
+    // rook -- very similar to bishop, just different set of moves
+    else if (piece == BLACK_ROOK) {
+      std::vector<std::pair<int, int>> moves = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            res.push_back(row*8+col);
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            break;
+          }
+        }
+      }
+    }
+    // queen -- very similar to rook and bishop 
+    else if (piece == BLACK_QUEEN) {
+      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      for (std::pair<int, int> move : moves) {
+        int row = curr_row; int col = curr_col;
+        while (1) {
+          row += move.first;
+          col += move.second;
+          int piece = board->get_piece(row*8+col);
+          // edge of the board
+          if (row < 0 || row > 7 || col < 0 || col > 7) {break;}
+          
+          // empty square
+          else if (piece == EMPTY) {
+            res.push_back(row*8+col);
+          }
+
+          // white piece
+          else if (piece != EMPTY && piece <= WHITE_KING) {
+            res.push_back(row*8+col);
+            break;
+          }
+
+          // only other case: black piece
+          else {
+            break;
+          }
+        }
+      }
+    }
+      // king -- similar to the knights movement 
+    else if (piece == BLACK_KING) {
+      std::vector<std::pair<int, int>> moves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+      for (std::pair move : moves) {
+        int row = move.first + curr_row;
+        int col = move.second + curr_col;
+        
+        // check if out of bounds
+        if (row < 0 || row > 7 || col < 0 || col > 7) {continue;}
+
+        if (board->get_piece(row*8+col) <= WHITE_KING) {
+          res.push_back(row*8+col);
+        }
+      }
+    }
   }
+
+  // TODO: SIMULATE EACH LEGAL MOVE AND SEE IF THE PERSON IS IN CHECK
   return res;
 }

@@ -31,7 +31,8 @@ int main() {
   White::load_images(renderer);
   Black::load_images(renderer);
   Board *board = new Board();
-  std::vector<int> clicked;
+  int clicked_pos = -1;
+  std::vector<int> legal_moves;
 
   // RUNNING LOOP
   while (1) {
@@ -46,16 +47,28 @@ int main() {
       double yPos = event.button.y;
       int row = yPos / (WINDOW_HEIGHT / 8);
       int col = xPos / (WINDOW_WIDTH / 8);
-      std::vector<int> legal_moves = get_legal_moves(row*8+col, board, 7*8+4, 4);
-      clicked.push_back(row*8+col);
-      clicked.insert(clicked.end(), legal_moves.begin(), legal_moves.end());
+      if (row*8+col == clicked_pos) {continue;}
+      // square clicked is in the legal_moves of the piece that is clicked
+      else if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
+        animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+        legal_moves.clear();
+        clicked_pos = -1;
+      }
+
+      // square clicked is not a legal move 
+      else {
+        clicked_pos = row*8+col;
+        legal_moves.clear();
+        legal_moves = get_legal_moves(clicked_pos, board, 0, 0); //TODO: Update get_legal_moves to handle the white king and the black king
+        legal_moves.push_back(clicked_pos);
+      }
     }
     // reset renderer
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
     // draws board
-    drawBoard(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, clicked);
+    drawBoard(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, legal_moves);
     board->render_board(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_RenderPresent(renderer);
   }

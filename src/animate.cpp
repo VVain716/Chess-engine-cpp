@@ -30,7 +30,7 @@ bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int w
   double dy = (dest_y - curr->y) / length * SPEED;
   double dx = (dest_x - curr->x) / length * SPEED;
 
-  while (fabs(dest_y - curr->y) > 1 || fabs(dest_x - curr->x) > 1) {
+  while (fabs(dest_y - curr->y) > 10 || fabs(dest_x - curr->x) > 10) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
     // draws board
