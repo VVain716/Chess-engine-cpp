@@ -17,9 +17,6 @@ int main() {
   SDL_Renderer *renderer;
   SDL_Event event;
   
-  int white_king = 7*8+4;
-  int black_king = 4;
-
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL");
     return 3;
@@ -28,14 +25,29 @@ int main() {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer");
   }
   
+  // max refresh rate 
   SDL_SetRenderVSync(renderer, 1);
+  
 
+  // load images 
   White::load_images(renderer);
   Black::load_images(renderer);
+
+  // initialize board 
   Board *board = new Board();
+
+  // intialize clicked variables 
   int clicked_pos = -1;
   std::vector<int> legal_moves;
+  
+  // get white and black king positions
+  int white_king = 7*8+4;
+  int black_king = 4;
+
+  // start with white's move 
   bool white_move = true;
+
+
   // RUNNING LOOP
   while (1) {
     SDL_PollEvent(&event);
@@ -120,8 +132,20 @@ int main() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    // draws board
-    drawBoard(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, legal_moves);
+    // draws grid
+    board->drawBoard(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, legal_moves);
+    
+    // check if there is a check for white 
+    if (white_move && king_check(board, white_king)) {
+      board->check(renderer, white_king, WINDOW_WIDTH, WINDOW_HEIGHT);
+    }
+    
+    // check if black is being checked 
+    else if (!white_move && king_check(board, black_king)) {
+      board->check(renderer, black_king, WINDOW_WIDTH, WINDOW_HEIGHT);
+    }
+
+    // draws pieces 
     board->render_board(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_RenderPresent(renderer);
   }

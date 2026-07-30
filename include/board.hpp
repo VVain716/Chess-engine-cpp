@@ -39,8 +39,10 @@ private:
     {4, 2, 3, 5, 6, 3, 2, 4}
   };
 public:
+  bool drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked);
   bool render_board(SDL_Renderer *renderer, int width, int height);
   int get_piece(int val);
   bool set_piece(int val, int new_piece);
+  bool check(SDL_Renderer *renderer, int kingpos, int width, int height);
 };
 #endif

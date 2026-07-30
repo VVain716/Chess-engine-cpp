@@ -3,7 +3,8 @@
 const Pixel blackSquare = newPixel(153, 87, 81, 255);
 const Pixel whiteSquare = newPixel(241, 233, 232, 255);
 const Pixel clickedSquare = newPixel(134, 151, 110, 255);
-bool drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked) {
+const Pixel redSquare = newPixel(226, 50, 34, 255);
+bool Board::drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked) {
   int squareWidth = width / 8;
   int squareHeight = height / 8;
   for (int i = 0; i < width; i += squareWidth) {
@@ -58,6 +59,18 @@ bool Board::render_board(SDL_Renderer *renderer, int width, int height) {
       SDL_RenderTexture(renderer, s, nullptr, rect);
     }
   }
+  return true;
+}
+
+bool Board::check(SDL_Renderer *renderer, int kingpos, int width, int height) {
+  SDL_FRect tmp;
+  SDL_FRect *rect = &tmp;
+  rect->x = (kingpos % 8) * (width / 8);
+  rect->y = (kingpos / 8) * (height / 8);
+  rect->w = width / 8;
+  rect->h = height / 8;
+  SDL_SetRenderDrawColor(renderer, redSquare.red, redSquare.green, redSquare.blue, redSquare.alpha);
+  SDL_RenderFillRect(renderer, rect);
   return true;
 }
 
