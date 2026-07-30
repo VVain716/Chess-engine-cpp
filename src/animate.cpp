@@ -6,7 +6,7 @@
 
 bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int width, int height) {
   // initial drawing
-  const int SPEED = 8;
+  int speed = 8;
   const int TICKS = SDL_GetPerformanceFrequency() / FPS;
 
   int src_row = src / 8; int src_col = src % 8; int dest_row = dest / 8; int dest_col = dest % 8;
@@ -25,10 +25,10 @@ bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int w
   curr->h = height / 8;
   int dest_x = dest_col * width / 8;
   int dest_y = dest_row * height / 8;
-
   double length = sqrt((dest_x - curr->x) * (dest_x - curr->x) + (dest_y - curr->y) * (dest_y - curr->y));
-  double dy = (dest_y - curr->y) / length * SPEED;
-  double dx = (dest_x - curr->x) / length * SPEED;
+  speed = length / 20;
+  double dy = (dest_y - curr->y) / length * speed;
+  double dx = (dest_x - curr->x) / length * speed;
 
   while (fabs(dest_y - curr->y) > 10 || fabs(dest_x - curr->x) > 10) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);

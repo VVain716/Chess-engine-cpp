@@ -1,12 +1,18 @@
 #include "moves.hpp"
 
 
+const std::vector<std::pair<int, int>> knight_moves = {{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}};
+const std::vector<std::pair<int, int>> bishop_moves = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+const std::vector<std::pair<int, int>> rook_moves = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+const std::vector<std::pair<int, int>> queen_moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+const std::vector<std::pair<int, int>> king_moves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+
+
 bool king_check(Board *board, int kingpos) {
   int king_row = kingpos / 8; int king_col = kingpos % 8;
   bool is_white = (board->get_piece(king_row*8+king_col) == WHITE_KING);
   
   // check whether a knight is attacking
-  std::vector<std::pair<int, int>> knight_moves = {{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}};
   for (std::pair<int, int> x : knight_moves) {
     int curr_row = king_row + x.first;
     int curr_col = king_col + x.second;
@@ -41,9 +47,8 @@ bool king_check(Board *board, int kingpos) {
   }
 
   // check bishops and queens
-  std::vector<std::pair<int, int>> diagonal_moves = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
-  for (std::pair<int, int> move : diagonal_moves) {
+  for (std::pair<int, int> move : bishop_moves) {
     int curr_row = king_row; int curr_col = king_col;
     while (1){
       curr_row += move.first;
@@ -65,16 +70,15 @@ bool king_check(Board *board, int kingpos) {
     }
   }
   
-  // check whether we are hit by a rook or a king
-  std::vector<std::pair<int, int>> orthogonal_moves = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
-  for (std::pair<int, int> move : orthogonal_moves) {
+  // check whether we are hit by a rook or a queen
+  for (std::pair<int, int> move : rook_moves) {
     int curr_row = king_row; int curr_col = king_col;
     while (1){ 
       curr_row += move.first;
       curr_col += move.second;
 
       if (curr_row < 0 || curr_row > 7 || curr_col < 0 || curr_col > 7) {
-        break; // no bishop or queen has been seen before we have hit the end of the board
+        break; // no rook or queen has been seen before we have hit the end of the board
       }
       
       // check if we have hit a piece
@@ -112,6 +116,17 @@ bool king_check(Board *board, int kingpos) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
 std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int black_king) {
   std::vector<int> res;
   int curr_row = pos / 8;
@@ -147,8 +162,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
     // knight
     else if (piece == WHITE_KNIGHT) {
-      std::vector<std::pair<int, int>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};
-      for (std::pair move : moves) {
+      for (std::pair move : knight_moves) {
         int row = move.first + curr_row;
         int col = move.second + curr_col;
 
@@ -163,8 +177,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
 
     // bishop
     else if (piece == WHITE_BISHOP) {
-      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : bishop_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -195,8 +208,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
 
     // rook -- very similar to bishop, just different set of moves
     else if (piece == WHITE_ROOK) {
-      std::vector<std::pair<int, int>> moves = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : rook_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -225,8 +237,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
     // queen -- very similar to rook and bishop 
     else if (piece == WHITE_QUEEN) {
-      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : queen_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -255,8 +266,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
       // king -- similar to the knights movement 
     else if (piece == WHITE_KING) {
-      std::vector<std::pair<int, int>> moves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-      for (std::pair move : moves) {
+      for (std::pair move : king_moves) {
         int row = move.first + curr_row;
         int col = move.second + curr_col;
         
@@ -279,8 +289,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
 
 
 
-
-  //TODO: BLACK
+  // black
   else {
     // pawn
     if (piece == BLACK_PAWN) {
@@ -305,8 +314,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
     // knight
     else if (piece == BLACK_KNIGHT) {
-      std::vector<std::pair<int, int>> moves = {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};
-      for (std::pair move : moves) {
+      for (std::pair move : knight_moves) {
         int row = move.first + curr_row;
         int col = move.second + curr_col;
 
@@ -321,8 +329,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
 
     // bishop
     else if (piece == BLACK_BISHOP) {
-      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : bishop_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -353,8 +360,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
 
     // rook -- very similar to bishop, just different set of moves
     else if (piece == BLACK_ROOK) {
-      std::vector<std::pair<int, int>> moves = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : rook_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -383,8 +389,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
     // queen -- very similar to rook and bishop 
     else if (piece == BLACK_QUEEN) {
-      std::vector<std::pair<int, int>> moves = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-      for (std::pair<int, int> move : moves) {
+      for (std::pair<int, int> move : queen_moves) {
         int row = curr_row; int col = curr_col;
         while (1) {
           row += move.first;
@@ -413,8 +418,7 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     }
       // king -- similar to the knights movement 
     else if (piece == BLACK_KING) {
-      std::vector<std::pair<int, int>> moves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-      for (std::pair move : moves) {
+      for (std::pair<int, int> move : king_moves) {
         int row = move.first + curr_row;
         int col = move.second + curr_col;
         
@@ -427,7 +431,36 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
       }
     }
   }
+  //TODO: Handle castling and en-passent 
 
-  // TODO: SIMULATE EACH LEGAL MOVE AND SEE IF THE PERSON IS IN CHECK
-  return res;
+  std::vector<int> without_checks;
+  for (int move : res) {
+    // store the previous pieces 
+    int src = board->get_piece(pos);
+    int dst = board->get_piece(move);
+    
+    // simulate the move
+    board->set_piece(pos, EMPTY);
+    board->set_piece(move, src);
+    
+    if (board->get_piece(move) == WHITE_KING) {
+      white_king = move;
+    }
+    else if (board->get_piece(move) == BLACK_KING) {
+      black_king = move;
+    }
+
+    if (is_white && !king_check(board, white_king)) {
+      without_checks.push_back(move);
+    }
+    
+    else if (!is_white && !king_check(board, black_king)) {
+      without_checks.push_back(move);
+    }
+
+    // reset to previous positions
+    board->set_piece(pos, src);
+    board->set_piece(move, dst);
+  }
+  return without_checks;
 }

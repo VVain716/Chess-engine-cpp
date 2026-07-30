@@ -17,6 +17,8 @@ int main() {
   SDL_Renderer *renderer;
   SDL_Event event;
   
+  int white_king = 7*8+4;
+  int black_king = 4;
 
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL");
@@ -33,7 +35,7 @@ int main() {
   Board *board = new Board();
   int clicked_pos = -1;
   std::vector<int> legal_moves;
-
+  bool white_move = true;
   // RUNNING LOOP
   while (1) {
     SDL_PollEvent(&event);
@@ -47,21 +49,72 @@ int main() {
       double yPos = event.button.y;
       int row = yPos / (WINDOW_HEIGHT / 8);
       int col = xPos / (WINDOW_WIDTH / 8);
+      // square that has been clicked is already been stored 
       if (row*8+col == clicked_pos) {continue;}
-      // square clicked is in the legal_moves of the piece that is clicked
-      else if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
-        animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
-        legal_moves.clear();
-        clicked_pos = -1;
-      }
 
-      // square clicked is not a legal move 
-      else {
-        clicked_pos = row*8+col;
-        legal_moves.clear();
-        legal_moves = get_legal_moves(clicked_pos, board, 0, 0); //TODO: Update get_legal_moves to handle the white king and the black king
-        legal_moves.push_back(clicked_pos);
+      // it is white's move 
+      if (white_move) {
+        // legal move
+        if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
+          // quickly check if the white king has moved 
+          if (board->get_piece(clicked_pos) == WHITE_KING) {
+            white_king = row*8+col;
+          }
+
+          animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          legal_moves.clear();
+          clicked_pos = -1;
+          // set it to blacks move 
+          white_move = !white_move;
+        }
+
+        // black piece 
+        else if (board->get_piece(row*8+col) == EMPTY || board->get_piece(row*8+col) > WHITE_KING) {
+          legal_moves.clear();
+          clicked_pos = row*8+col;
+          legal_moves.push_back(clicked_pos);
+        }
+
+        // different white piece 
+        else {
+          clicked_pos = row*8+col;
+          legal_moves.clear();
+          legal_moves = get_legal_moves(clicked_pos, board, white_king, black_king);
+          legal_moves.push_back(clicked_pos);
+        }
       }
+      // black to move 
+      else {
+
+        // legal move 
+        if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
+          // quickly check if black king has moved 
+          if (board->get_piece(clicked_pos) == BLACK_KING) {
+            black_king = row*8+col;
+          }
+
+          animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          legal_moves.clear();
+          clicked_pos = -1;
+          white_move = !white_move; // set it to black to move 
+        }
+
+        // square clicked is empty or contains a white piece
+        else if (board->get_piece(row*8+col) <= WHITE_KING) {
+          legal_moves.clear();
+          clicked_pos = row*8+col;
+          legal_moves.push_back(clicked_pos);
+        }
+
+        // other black piece 
+        else {
+          clicked_pos = row*8+col;
+          legal_moves.clear();
+          legal_moves = get_legal_moves(clicked_pos, board, white_king, black_king); 
+          legal_moves.push_back(clicked_pos);
+        }
+      } 
+
     }
     // reset renderer
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
