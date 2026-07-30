@@ -1,3 +1,9 @@
+/*
+TODO: Implement checkmate and stalemate functions
+TODO: Refactor code to make code more readable, row*8+col, other improvements as well
+*/
+
+
 #include "moves.hpp"
 
 
@@ -114,10 +120,6 @@ bool king_check(Board *board, int kingpos) {
   }
   return false;
 }
-
-
-
-
 
 
 
@@ -463,4 +465,54 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
     board->set_piece(move, dst);
   }
   return without_checks;
+}
+
+
+
+bool get_color(int piece) {
+  return piece <= WHITE_KING;
+}
+
+
+std::vector<std::pair<int, int>> total_legal_moves(Board *board, bool is_white, int white_king, int black_king) {
+  std::vector<std::pair<int, int>> res; // each legal move is modeled by {src, dest}
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      int pos = row*8+col;
+      int piece = board->get_piece(pos);
+      if (piece != EMPTY && get_color(piece) == is_white) {
+        std::vector<int> moves = get_legal_moves(pos, board, white_king, black_king);
+        for (int move : moves) {
+          res.push_back({pos, move});
+        }
+      }
+    }
+  }
+  return res;
+}
+
+
+
+// function to examine whether piece is checkmated
+bool checkmate(Board *board, bool is_white, int white_king, int black_king) {
+  // assumes that kingpos represents the king's position
+
+
+  // checks whether the king is in check
+  if (!((is_white && king_check(board, white_king)) || (!is_white && king_check(board, black_king)))) {
+    return false; // if king isn't in check, return false
+  }
+
+  std::vector<std::pair<int, int>> possible = total_legal_moves(board, is_white, white_king, black_king);
+  return possible.size() == 0;
+}
+
+bool stalemate(Board *board, bool is_white, int white_king, int black_king) {
+  // king can't be in check
+  if (((is_white && king_check(board, white_king)) || (!is_white && king_check(board, black_king)))) {
+    return false; // if king isn't in check, it can't be a stalemate
+  }
+
+  std::vector<std::pair<int, int>> possible = total_legal_moves(board, is_white, white_king, black_king);
+  return possible.size() == 0;
 }

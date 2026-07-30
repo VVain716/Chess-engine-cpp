@@ -9,6 +9,10 @@
 #define BLACK_PATH "../pieces/black"
 #endif
 
+#ifndef RESULTS_PATH
+#define RESULTS_PATH "../results"
+#endif
+
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 
@@ -34,6 +38,15 @@ namespace Black {
   extern SDL_Texture *queen;
   extern SDL_Texture *king;
   
+  bool load_images(SDL_Renderer *renderer);
+  bool destroy_images();
+}
+
+namespace Result {
+  extern SDL_Texture *white_win;
+  extern SDL_Texture *black_win;
+  extern SDL_Texture *draw;
+
   bool load_images(SDL_Renderer *renderer);
   bool destroy_images();
 }

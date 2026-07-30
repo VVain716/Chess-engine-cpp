@@ -17,7 +17,12 @@ namespace Black {
   SDL_Texture *rook = nullptr;
   SDL_Texture *queen = nullptr;
   SDL_Texture *king = nullptr;
+}
 
+namespace Result {
+  SDL_Texture *white_win = nullptr;
+  SDL_Texture *black_win = nullptr;
+  SDL_Texture *draw = nullptr;
 }
 
 SDL_Texture *get_texture(int val) {
@@ -105,3 +110,16 @@ bool Black::destroy_images() {
   return true;
 }
 
+bool Result::load_images(SDL_Renderer *renderer) {
+  white_win = IMG_LoadTexture(renderer, RESULTS_PATH "/white-win.png");
+  black_win = IMG_LoadTexture(renderer, RESULTS_PATH "/black-win.png");
+  draw = IMG_LoadTexture(renderer, RESULTS_PATH "/draw.png");
+  return true;
+}
+
+bool Result::destroy_images() {
+  SDL_DestroyTexture(white_win);
+  SDL_DestroyTexture(black_win);
+  SDL_DestroyTexture(draw);
+  return true;
+}

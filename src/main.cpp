@@ -32,7 +32,7 @@ int main() {
   // load images 
   White::load_images(renderer);
   Black::load_images(renderer);
-
+  Result::load_images(renderer);
   // initialize board 
   Board *board = new Board();
 
@@ -145,12 +145,29 @@ int main() {
       board->check(renderer, black_king, WINDOW_WIDTH, WINDOW_HEIGHT);
     }
 
-    // draws pieces 
-    board->render_board(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    if (checkmate(board, white_move, white_king, black_king)) {
+      if (!white_move) {
+        SDL_RenderTexture(renderer, Result::white_win, NULL, NULL);
+      }
+      else {
+        SDL_RenderTexture(renderer, Result::black_win, NULL, NULL);
+      }
+    }
+    else if (stalemate(board, white_move, white_king, black_king)) {
+      SDL_RenderTexture(renderer, Result::draw, NULL, NULL);
+    }
+
+    else {
+      // game is still going on
+      board->render_board(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    }
     SDL_RenderPresent(renderer);
   }
+
+  // clean up memory
   White::destroy_images();
   Black::destroy_images();
+  Result::destroy_images();
   delete board;
   SDL_DestroyWindow(window);
   SDL_DestroyRenderer(renderer);

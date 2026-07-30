@@ -4,6 +4,9 @@ const Pixel blackSquare = newPixel(153, 87, 81, 255);
 const Pixel whiteSquare = newPixel(241, 233, 232, 255);
 const Pixel clickedSquare = newPixel(134, 151, 110, 255);
 const Pixel redSquare = newPixel(226, 50, 34, 255);
+
+
+
 bool Board::drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked) {
   int squareWidth = width / 8;
   int squareHeight = height / 8;
@@ -16,7 +19,7 @@ bool Board::drawBoard(SDL_Renderer *renderer, int width, int height, std::vector
       rect->w = squareWidth;
       rect->h = squareHeight;
       // get the color
-      if ((i / 100 + j / 100) % 2 == 0) {
+      if ((i / 100 + j / 100) % 2 != 0) {
         SDL_SetRenderDrawColor(renderer, blackSquare.red, blackSquare.green, blackSquare.blue, blackSquare.alpha);
       }
       else {

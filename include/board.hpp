@@ -23,8 +23,6 @@
 #define BLACK_KING 12
 
 
-bool drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked);
-
 class Board {
   // 0 = empty, 1 = white pawn, 2 = white knight, 3 = white bishop, 4 = white rook, 5 = white queen, 6 = white king, add 6 to each piece value to make it black
 private:
