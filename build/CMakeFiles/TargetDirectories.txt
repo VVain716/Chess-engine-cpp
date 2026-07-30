@@ -1,0 +1,4 @@
+/Users/vedvainateya/c/cppPrograms/chess-engine/build/CMakeFiles/helper.dir
+/Users/vedvainateya/c/cppPrograms/chess-engine/build/CMakeFiles/chess-engine.dir
+/Users/vedvainateya/c/cppPrograms/chess-engine/build/CMakeFiles/edit_cache.dir
+/Users/vedvainateya/c/cppPrograms/chess-engine/build/CMakeFiles/rebuild_cache.dir
