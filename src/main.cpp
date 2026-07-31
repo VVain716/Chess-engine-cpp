@@ -5,7 +5,7 @@
 #include "pieces.hpp"
 #include "animate.hpp"
 #include "moves.hpp"
-
+#include "notate.hpp"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
@@ -43,7 +43,7 @@ int main() {
   Result::load_images(renderer);
   // initialize board 
   Board *board = new Board();
-
+  Coordinate *coord = new Coordinate();
   // intialize clicked variables 
   int clicked_pos = -1;
   std::vector<int> legal_moves;
@@ -57,7 +57,7 @@ int main() {
 
 
   // RUNNING LOOP
-  while (1) {
+  while (true) {
     SDL_PollEvent(&event);
     if (event.type == SDL_EVENT_QUIT) {
       break;
@@ -82,11 +82,13 @@ int main() {
             // check if the move is a kingside or a queenside castle
             if (clicked_pos + 2 == row*8+col) {
               // kingside castle
+              coord->add_kingside(board, white_move);
               ExecuteCastle::white_kingside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
               castled = true;
             }
             else if (clicked_pos - 2 == row*8+col) {
               // queenside castle
+              coord->add_queenside(board, white_move);
               ExecuteCastle::white_queenside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
               castled = true;
             }
@@ -104,6 +106,7 @@ int main() {
           }
           
           if (!castled) {
+            coord->add_move(board, clicked_pos, row*8+col);
             animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
           }
           legal_moves.clear();
@@ -138,22 +141,24 @@ int main() {
       }
 
 
-
       // black to move 
       else {
         // legal move 
         if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
+          
           // quickly check if black king has moved 
           bool castled = false;
           if (board->get_piece(clicked_pos) == BLACK_KING) {
             if (clicked_pos + 2 == row*8+col) {
               // kingside castle
+              coord->add_kingside(board, white_move);
               ExecuteCastle::black_kingside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
               castled = true;
             }
 
             else if (clicked_pos - 2 == row*8+col) {
               // queenside castle
+              coord->add_queenside(board, white_move);
               ExecuteCastle::black_queenside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
               castled = true;
             }
@@ -172,6 +177,7 @@ int main() {
           }
 
           if (!castled){
+            coord->add_move(board, clicked_pos, row*8+col);
             animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
           }
           legal_moves.clear();
@@ -224,14 +230,18 @@ int main() {
 
     if (checkmate(board, white_move, white_king, black_king)) {
       if (!white_move) {
-        SDL_RenderTexture(renderer, Result::white_win, NULL, NULL);
+        coord->white_win();
       }
       else {
-        SDL_RenderTexture(renderer, Result::black_win, NULL, NULL);
+        coord->black_win();
       }
+      std::cout << coord->get_moves() << std::endl;
+      break;
     }
     else if (stalemate(board, white_move, white_king, black_king)) {
-      SDL_RenderTexture(renderer, Result::draw, NULL, NULL);
+      coord->draw();
+      std::cout << coord->get_moves() << std::endl;
+      break;
     }
 
     else {
@@ -247,6 +257,7 @@ int main() {
   Black::destroy_images();
   Result::destroy_images();
   delete board;
+  delete coord;
   SDL_DestroyWindow(window);
   SDL_DestroyRenderer(renderer);
 }
