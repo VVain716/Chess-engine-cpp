@@ -15,7 +15,7 @@ bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int w
   if (s == nullptr) {
     return false;
   }
-  board->set_piece(src, 0);
+  board->set_piece(src, 0); // clear piece from the board
   SDL_RenderPresent(renderer);
   SDL_FRect tmp;
   SDL_FRect *curr = &tmp;
@@ -51,6 +51,6 @@ bool animate_move(SDL_Renderer *renderer, int src, int dest, Board *board, int w
       SDL_Delay(delay);
     }
   }
-  board->set_piece(dest, piece);
+  board->set_piece(dest, piece); // set new piece from the board
   return true;
 }

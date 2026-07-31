@@ -36,11 +36,21 @@ private:
     {1, 1, 1, 1, 1, 1, 1, 1},
     {4, 2, 3, 5, 6, 3, 2, 4}
   };
+  
+  
 public:
   bool drawBoard(SDL_Renderer *renderer, int width, int height, std::vector<int> clicked);
   bool render_board(SDL_Renderer *renderer, int width, int height);
   int get_piece(int val);
   bool set_piece(int val, int new_piece);
   bool check(SDL_Renderer *renderer, int kingpos, int width, int height);
+  
+  // need to keep track of 6 things to ensure castling
+  bool white_king_moved = false;
+  bool black_king_moved = false;
+  bool white_left_rook_moved = false;
+  bool black_left_rook_moved = false;
+  bool white_right_rook_moved = false;
+  bool black_right_rook_moved = false;
 };
 #endif

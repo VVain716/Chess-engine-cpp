@@ -467,8 +467,6 @@ std::vector<int> get_legal_moves(int pos, Board *board, int white_king, int blac
   return without_checks;
 }
 
-
-
 bool get_color(int piece) {
   return piece <= WHITE_KING;
 }
@@ -488,6 +486,10 @@ std::vector<std::pair<int, int>> total_legal_moves(Board *board, bool is_white, 
       }
     }
   }
+
+  //TODO: Handle castles and add them to res
+
+
   return res;
 }
 
@@ -515,4 +517,164 @@ bool stalemate(Board *board, bool is_white, int white_king, int black_king) {
 
   std::vector<std::pair<int, int>> possible = total_legal_moves(board, is_white, white_king, black_king);
   return possible.size() == 0;
+}
+
+
+// check castle functions
+bool CheckCastle::white_kingside_castle(Board *board) {
+  // check whether king and rook has moved
+  if (board->white_king_moved || board->white_right_rook_moved) {return false;}
+
+
+  int start_pos = 7*8+4;
+  int end_pos = start_pos + 2;
+
+
+  // checks whether pieces exist
+  if (board->get_piece(start_pos) != WHITE_KING || board->get_piece(start_pos + 3) != WHITE_ROOK) {return false;}
+  
+  // checks whether king is currently in check
+  if (king_check(board, start_pos)) {return false;}
+
+  // checks whether future squares are empty, also checks whether those squares would result the king being in check
+  for (int i = start_pos + 1; i <= end_pos; i++) {
+    if (board->get_piece(i) != EMPTY) {
+      return false;
+    }
+
+    // temporarily set king to the position
+    board->set_piece(i, WHITE_KING);
+
+    if (king_check(board, i)) {
+      return false;
+    }
+
+    board->set_piece(i, EMPTY);
+  }
+  return true;
+}
+bool CheckCastle::black_kingside_castle(Board *board) {
+  // check whether king and rook has moved
+  if (board->black_king_moved || board->black_right_rook_moved) {return false;}
+
+
+  int start_pos = 4;
+  int end_pos = start_pos + 2;
+
+
+  // checks whether pieces exist
+  if (board->get_piece(start_pos) != BLACK_KING || board->get_piece(start_pos + 3) != BLACK_ROOK) {return false;}
+  
+  // checks whether king is currently in check
+  if (king_check(board, start_pos)) {return false;}
+
+  // checks whether future squares are empty, also checks whether those squares would result the king being in check
+  for (int i = start_pos + 1; i <= end_pos; i++) {
+    if (board->get_piece(i) != EMPTY) {
+      return false;
+    }
+
+    // temporarily set king to the position
+    board->set_piece(i, BLACK_KING);
+
+    if (king_check(board, i)) {
+      return false;
+    }
+
+    board->set_piece(i, EMPTY);
+  }
+  return true;
+}
+bool CheckCastle::white_queenside_castle(Board *board) {
+   // check whether king and rook has moved
+  if (board->white_king_moved || board->white_left_rook_moved) {return false;}
+
+
+  int start_pos = 7*8+4;
+  int end_pos = start_pos - 2;
+
+
+  // checks whether pieces exist
+  if (board->get_piece(start_pos) != WHITE_KING || board->get_piece(start_pos - 4) != WHITE_ROOK) {return false;}
+  
+  // checks whether king is currently in check
+  if (king_check(board, start_pos)) {return false;}
+
+  // checks whether future squares are empty, also checks whether those squares would result the king being in check
+  for (int i = start_pos - 1; i >= end_pos; i--) {
+    if (board->get_piece(i) != EMPTY) {
+      return false;
+    }
+
+    // temporarily set king to the position
+    board->set_piece(i, WHITE_KING);
+
+    if (king_check(board, i)) {
+      return false;
+    }
+
+    board->set_piece(i, EMPTY);
+  }
+  return true;
+}
+bool CheckCastle::black_queenside_castle(Board *board) {
+  // check whether king and rook has moved
+  if (board->black_king_moved || board->black_left_rook_moved) {return false;}
+
+
+  int start_pos = 4;
+  int end_pos = start_pos - 2;
+
+
+  // checks whether pieces exist
+  if (board->get_piece(start_pos) != BLACK_KING || board->get_piece(start_pos - 4) != BLACK_ROOK) {return false;}
+  
+  // checks whether king is currently in check
+  if (king_check(board, start_pos)) {return false;}
+
+  // checks whether future squares are empty, also checks whether those squares would result the king being in check
+  for (int i = start_pos - 1; i >= end_pos; i--) {
+    if (board->get_piece(i) != EMPTY) {
+      return false;
+    }
+
+    // temporarily set king to the position
+    board->set_piece(i, BLACK_KING);
+
+    if (king_check(board, i)) {
+      return false;
+    }
+
+    board->set_piece(i, EMPTY);
+  }
+  return true;
+}
+
+
+// execute castle functions
+bool ExecuteCastle::white_kingside_castle(SDL_Renderer *renderer, Board *board, int width, int height) {
+  // move king
+  animate_move(renderer, 7*8+4, 7*8+6, board, width, height);
+
+  // move rook
+  animate_move(renderer, 7*8+7, 7*8+5, board, width, height);
+  return true;
+}
+
+bool ExecuteCastle::black_kingside_castle(SDL_Renderer *renderer, Board *board, int width, int height) {
+  animate_move(renderer, 4, 6, board, width, height);
+  animate_move(renderer, 7, 5, board, width, height);
+  return true;
+}
+
+bool ExecuteCastle::white_queenside_castle(SDL_Renderer *renderer, Board *board, int width, int height) {
+  animate_move(renderer, 7*8+4, 7*8+2, board, width, height);
+  animate_move(renderer, 7*8, 7*8+3, board, width, height);
+  return true;
+}
+
+bool ExecuteCastle::black_queenside_castle(SDL_Renderer *renderer, Board *board, int width, int height) {
+  animate_move(renderer, 4, 2, board, width, height);
+  animate_move(renderer, 0, 3, board, width, height);
+  return true;
 }

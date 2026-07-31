@@ -3078,8 +3078,10 @@ CMakeFiles/helper.dir/src/moves.cpp.o
  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stdarg.h
  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stddef.h
  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stdint.h
+ /Users/vedvainateya/c/cppPrograms/chess-engine/include/animate.hpp
  /Users/vedvainateya/c/cppPrograms/chess-engine/include/board.hpp
  /Users/vedvainateya/c/cppPrograms/chess-engine/include/moves.hpp
+ /Users/vedvainateya/c/cppPrograms/chess-engine/include/pieces.hpp
  /Users/vedvainateya/c/cppPrograms/chess-engine/include/pixel.hpp
  /opt/homebrew/include/SDL3/SDL.h
  /opt/homebrew/include/SDL3/SDL_assert.h

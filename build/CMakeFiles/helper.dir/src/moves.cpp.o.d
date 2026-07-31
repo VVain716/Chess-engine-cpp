@@ -1043,4 +1043,6 @@ CMakeFiles/helper.dir/src/moves.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/stack \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/print \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/unistd.h \
-  /Users/vedvainateya/c/cppPrograms/chess-engine/include/pixel.hpp
+  /Users/vedvainateya/c/cppPrograms/chess-engine/include/pixel.hpp \
+  /Users/vedvainateya/c/cppPrograms/chess-engine/include/animate.hpp \
+  /Users/vedvainateya/c/cppPrograms/chess-engine/include/pieces.hpp

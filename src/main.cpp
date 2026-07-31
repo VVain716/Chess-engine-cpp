@@ -10,6 +10,14 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
 
+const int white_king_starting = 7*8+4;
+const int black_king_starting = 4;
+const int white_left_rook_starting = 7*8;
+const int black_left_rook_starting = 0;
+const int white_right_rook_starting = 7*8+7;
+const int black_right_rook_starting = 7;
+
+
 int main() {
 
   // INIT 
@@ -69,11 +77,35 @@ int main() {
         // legal move
         if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
           // quickly check if the white king has moved 
+          bool castled = false;
           if (board->get_piece(clicked_pos) == WHITE_KING) {
+            // check if the move is a kingside or a queenside castle
+            if (clicked_pos + 2 == row*8+col) {
+              // kingside castle
+              ExecuteCastle::white_kingside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+              castled = true;
+            }
+            else if (clicked_pos - 2 == row*8+col) {
+              // queenside castle
+              ExecuteCastle::white_queenside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+              castled = true;
+            }
             white_king = row*8+col;
+            board->white_king_moved = true;
+          }
+          
+          // check whether either of the rooks moved, which would thus prevent castling
+          else if (clicked_pos == white_left_rook_starting) {
+            board->white_left_rook_moved = true;
           }
 
-          animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          else if (clicked_pos == white_right_rook_starting) {
+            board->white_right_rook_moved = true;
+          }
+          
+          if (!castled) {
+            animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          }
           legal_moves.clear();
           clicked_pos = -1;
           // set it to blacks move 
@@ -93,19 +125,55 @@ int main() {
           legal_moves.clear();
           legal_moves = get_legal_moves(clicked_pos, board, white_king, black_king);
           legal_moves.push_back(clicked_pos);
+
+          // check if piece clicked is the white king
+          if (board->get_piece(clicked_pos) == WHITE_KING && CheckCastle::white_kingside_castle(board)) {
+            legal_moves.push_back(clicked_pos + 2); // add legal move for white to kingside castle
+          }
+
+          if (board->get_piece(clicked_pos) == WHITE_KING && CheckCastle::white_queenside_castle(board)) {
+            legal_moves.push_back(clicked_pos - 2); // add legal move for white to queenside castle
+          }
         }
       }
+
+
+
       // black to move 
       else {
-
         // legal move 
         if (std::find(legal_moves.begin(), legal_moves.end(), row*8+col) != legal_moves.end()) {
           // quickly check if black king has moved 
+          bool castled = false;
           if (board->get_piece(clicked_pos) == BLACK_KING) {
+            if (clicked_pos + 2 == row*8+col) {
+              // kingside castle
+              ExecuteCastle::black_kingside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+              castled = true;
+            }
+
+            else if (clicked_pos - 2 == row*8+col) {
+              // queenside castle
+              ExecuteCastle::black_queenside_castle(renderer, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+              castled = true;
+            }
+            
             black_king = row*8+col;
+            board->black_king_moved = true;
+          }
+          
+          // check if either of the rooks have moved which would prevent castling
+          else if (clicked_pos == black_left_rook_starting) {
+            board->black_left_rook_moved = true;
           }
 
-          animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          else if (clicked_pos == black_right_rook_starting) {
+            board->black_right_rook_moved = true;
+          }
+
+          if (!castled){
+            animate_move(renderer, clicked_pos, row*8+col, board, WINDOW_WIDTH, WINDOW_HEIGHT);
+          }
           legal_moves.clear();
           clicked_pos = -1;
           white_move = !white_move; // set it to black to move 
@@ -124,6 +192,15 @@ int main() {
           legal_moves.clear();
           legal_moves = get_legal_moves(clicked_pos, board, white_king, black_king); 
           legal_moves.push_back(clicked_pos);
+
+          // check for kingside and queenside castle possibilities
+          if (board->get_piece(clicked_pos) == BLACK_KING && CheckCastle::black_kingside_castle(board)) {
+            legal_moves.push_back(clicked_pos + 2); // kingside castle
+          }
+
+          if (board->get_piece(clicked_pos) == BLACK_KING && CheckCastle::black_queenside_castle(board)){
+            legal_moves.push_back(clicked_pos - 2);
+          }
         }
       } 
 
@@ -161,6 +238,7 @@ int main() {
       // game is still going on
       board->render_board(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
     }
+
     SDL_RenderPresent(renderer);
   }
 
