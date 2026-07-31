@@ -5,7 +5,7 @@ Make a decent chess engine solely in c++.
 Chess board and the ruleset have been built
 
 # How to run
-Make sure that you have cmake and make installed.
+Make sure that you have cmake, make and g++ installed.
 
 Run
 ```bash
