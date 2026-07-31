@@ -4,9 +4,14 @@ Make a decent chess engine solely in c++.
 # Current State
 Chess board and the ruleset have been built
 
-# How to run
-Make sure that you have cmake, make and g++ installed.
+# Installing dependencies
+MacOS:
+run
+```bash
+brew install cmake make sdl3 sdl3_image
+```
 
+# How to run
 Run
 ```bash
 cmake -S . -B build
