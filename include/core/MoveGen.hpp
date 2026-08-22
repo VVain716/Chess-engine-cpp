@@ -25,6 +25,8 @@ public:
 
     static bool is_checkmate(Board& board);
     static bool is_stalemate(Board& board);
+    static bool is_insufficient_material(const Board& board);
+    static bool is_draw(Board& board);
 };
 
 } // namespace chess

@@ -2,6 +2,8 @@
 #include "core/Board.hpp"
 #include "core/MoveGen.hpp"
 #include "core/Notation.hpp"
+#include "core/Eval.hpp"
+#include "core/Search.hpp"
 #include <iostream>
 #include <cassert>
 #include <algorithm>
@@ -43,6 +45,38 @@ void test_get_legal_moves_api() {
     assert(enemy_sq_moves.empty());
 
     std::cout << "[TEST] get_legal_moves convenience API passed." << std::endl;
+}
+
+void test_eval_piece_square_tables() {
+    // Test Middlegame Pawn values
+    Square e2 = make_square(6, 4);
+    Square e4 = make_square(4, 4);
+    Square e7 = make_square(1, 4);
+
+    assert(Eval::Middlegame::PawnValue(e2) == Eval::Middlegame::pawn_table[6][4]);
+    assert(Eval::Middlegame::PawnValue(e4) == 120); // Centralized pawn
+    assert(Eval::Middlegame::PawnValue(e7) == 150); // Rank 7 pawn
+
+    // Test Middlegame Knight values
+    Square b1 = make_square(7, 1);
+    Square d4 = make_square(4, 3);
+    assert(Eval::Middlegame::KnightValue(b1) == Eval::Middlegame::knight_table[7][1]);
+    assert(Eval::Middlegame::KnightValue(d4) == 345); // Outpost
+
+    // Test Endgame Pawn values
+    assert(Eval::Endgame::PawnValue(e4) == 135);
+    assert(Eval::Endgame::PawnValue(e7) == 200); // 7th rank near promotion
+
+    // Test Endgame King centralization
+    Square e1 = make_square(7, 4);
+    assert(Eval::Endgame::KingValue(e4) > Eval::Endgame::KingValue(e1));
+
+    // Test overall initial board evaluate (should be symmetric 0)
+    Board start_board;
+    int eval_score = Eval::evaluate(start_board);
+    assert(eval_score == 0);
+
+    std::cout << "[TEST] Eval Piece-Square Tables and Evaluation passed." << std::endl;
 }
 
 void test_scholars_mate() {
@@ -160,13 +194,79 @@ void test_en_passant() {
     std::cout << "[TEST] En Passant test passed successfully." << std::endl;
 }
 
+void test_minimax_search() {
+    // 1. Test Best Move from Start Position
+    Board board;
+    SearchResult result = Search::search(board, 3);
+    assert(result.best_move.is_valid());
+    std::cout << "[TEST] Start position best move found: " << Notation::format_move(board, result.best_move)
+              << " with eval " << result.score << " (nodes: " << result.nodes << ")" << std::endl;
+
+    // 2. Test Mate-in-1 Detection (Scholar's Mate setup)
+    // 1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 -> White has mate in 1 with Qxf7#
+    Board mate_board;
+    mate_board.make_move(Move(make_square(6, 4), make_square(4, 4))); // e4
+    mate_board.make_move(Move(make_square(1, 4), make_square(3, 4))); // e5
+    mate_board.make_move(Move(make_square(7, 3), make_square(3, 7))); // Qh5
+    mate_board.make_move(Move(make_square(0, 1), make_square(2, 2))); // Nc6
+    mate_board.make_move(Move(make_square(7, 5), make_square(4, 2))); // Bc4
+    mate_board.make_move(Move(make_square(0, 6), make_square(2, 5))); // Nf6
+
+    Move mate_move = Search::get_best_move(mate_board, 2);
+    // Best move should be Qh5xf7 (from square 3,7 to square 1,5)
+    assert(mate_move.from == make_square(3, 7));
+    assert(mate_move.to == make_square(1, 5));
+    std::cout << "[TEST] Mate-in-1 found successfully: " << Notation::format_move(mate_board, mate_move) << std::endl;
+
+    // 3. Test Hanging Queen Capture
+    Board tactics_board;
+    tactics_board.clear();
+    tactics_board.set_piece(make_square(7, 4), Piece::WhiteKing);
+    tactics_board.set_piece(make_square(7, 0), Piece::WhiteRook);
+    tactics_board.set_piece(make_square(2, 0), Piece::BlackQueen); // Hanging queen on a6
+    tactics_board.set_piece(make_square(0, 4), Piece::BlackKing);
+    tactics_board.update_king_squares();
+
+    Move capture_move = Search::get_best_move(tactics_board, 2);
+    // White rook on a1 (7,0) captures black queen on a6 (2,0)
+    assert(capture_move.from == make_square(7, 0));
+    assert(capture_move.to == make_square(2, 0));
+    std::cout << "[TEST] Hanging piece capture found: " << Notation::format_move(tactics_board, capture_move) << std::endl;
+}
+
+void test_insufficient_material() {
+    Board board;
+    board.clear();
+    board.set_piece(make_square(7, 4), Piece::WhiteKing);
+    board.set_piece(make_square(0, 4), Piece::BlackKing);
+    board.update_king_squares();
+
+    // King vs King is a draw by insufficient material
+    assert(MoveGen::is_insufficient_material(board));
+    assert(MoveGen::is_draw(board));
+    std::cout << "[TEST] King vs King draw detected successfully." << std::endl;
+
+    // King + Knight vs King is also a draw
+    board.set_piece(make_square(5, 5), Piece::WhiteKnight);
+    assert(MoveGen::is_insufficient_material(board));
+    assert(MoveGen::is_draw(board));
+
+    // King + Pawn vs King is NOT insufficient material
+    board.set_piece(make_square(5, 5), Piece::WhitePawn);
+    assert(!MoveGen::is_insufficient_material(board));
+    std::cout << "[TEST] Insufficient material tests passed successfully." << std::endl;
+}
+
 int main() {
     std::cout << "Running Chess Core Unit Tests..." << std::endl;
     test_starting_position_legal_moves();
     test_get_legal_moves_api();
+    test_eval_piece_square_tables();
     test_scholars_mate();
     test_castling();
     test_en_passant();
+    test_minimax_search();
+    test_insufficient_material();
     std::cout << "All Unit Tests Passed!" << std::endl;
     return 0;
 }

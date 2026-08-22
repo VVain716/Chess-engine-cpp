@@ -25,4 +25,6 @@ public:
     static std::string format_move(const Board& board_before_move, const Move& move);
 };
 
+using Notation = MoveHistory;
+
 } // namespace chess

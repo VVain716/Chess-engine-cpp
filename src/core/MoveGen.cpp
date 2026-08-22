@@ -330,4 +330,59 @@ bool MoveGen::is_stalemate(Board& board) {
     return generate_legal_moves(board).empty();
 }
 
+bool MoveGen::is_insufficient_material(const Board& board) {
+    int white_pawns = 0, black_pawns = 0;
+    int white_knights = 0, black_knights = 0;
+    int white_bishops = 0, black_bishops = 0;
+    int white_rooks = 0, black_rooks = 0;
+    int white_queens = 0, black_queens = 0;
+
+    for (Square sq = 0; sq < 64; ++sq) {
+        Piece p = board.get_piece(sq);
+        switch (p) {
+            case Piece::WhitePawn:   ++white_pawns; break;
+            case Piece::BlackPawn:   ++black_pawns; break;
+            case Piece::WhiteKnight: ++white_knights; break;
+            case Piece::BlackKnight: ++black_knights; break;
+            case Piece::WhiteBishop: ++white_bishops; break;
+            case Piece::BlackBishop: ++black_bishops; break;
+            case Piece::WhiteRook:   ++white_rooks; break;
+            case Piece::BlackRook:   ++black_rooks; break;
+            case Piece::WhiteQueen:  ++white_queens; break;
+            case Piece::BlackQueen:  ++black_queens; break;
+            default: break;
+        }
+    }
+
+    // If any pawns, rooks, or queens exist, material is sufficient
+    if (white_pawns > 0 || black_pawns > 0 || white_rooks > 0 || black_rooks > 0 || white_queens > 0 || black_queens > 0) {
+        return false;
+    }
+
+    int white_minors = white_knights + white_bishops;
+    int black_minors = black_knights + black_bishops;
+
+    // 1. King vs King (0 minors each)
+    if (white_minors == 0 && black_minors == 0) {
+        return true;
+    }
+
+    // 2. King + minor vs King
+    if ((white_minors == 1 && black_minors == 0) || (white_minors == 0 && black_minors == 1)) {
+        return true;
+    }
+
+    // 3. King + 2 Knights vs King
+    if ((white_knights == 2 && white_bishops == 0 && black_minors == 0) ||
+        (black_knights == 2 && black_bishops == 0 && white_minors == 0)) {
+        return true;
+    }
+
+    return false;
+}
+
+bool MoveGen::is_draw(Board& board) {
+    return is_stalemate(board) || is_insufficient_material(board);
+}
+
 } // namespace chess

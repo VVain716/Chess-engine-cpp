@@ -14,6 +14,8 @@ add_library(chess_core
     src/core/Board.cpp
     src/core/MoveGen.cpp
     src/core/Notation.cpp
+    src/core/Eval.cpp
+    src/core/Search.cpp
 )
 
 target_include_directories(chess_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
@@ -36,6 +38,12 @@ add_executable(chess-engine src/main.cpp)
 target_link_libraries(chess-engine PRIVATE chess_ui chess_core SDL3::SDL3 SDL3_image::SDL3_image)
 target_compile_options(chess-engine PRIVATE -Wall -Wextra -Wpedantic)
 target_compile_definitions(chess-engine PRIVATE CHESS_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+
+# Play vs Computer Executable (with Eval Graph Sidebar)
+add_executable(play-computer src/play-computer.cpp)
+target_link_libraries(play-computer PRIVATE chess_ui chess_core SDL3::SDL3 SDL3_image::SDL3_image)
+target_compile_options(play-computer PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(play-computer PRIVATE CHESS_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
 # Unit Tests Executable
 add_executable(test_chess_core tests/test_chess_core.cpp)

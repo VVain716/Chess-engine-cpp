@@ -12,11 +12,14 @@ The project is cleanly decoupled into modular layers:
   - `Move`: Move representations (regular moves, castling, promotions, en passant).
   - `MoveGen`: Move generation, ray casting, check/checkmate/stalemate detection.
   - `Notation`: Move notation recorder and algebraic coordinate conversions.
+  - `Eval`: Tapered evaluation function with 2D Piece-Square Tables (PSTs).
+  - `Search`: Alpha-Beta minimax search with quiescence and move ordering.
 - **`chess_ui` (`include/ui/`, `src/ui/`)**: Graphics and rendering layer.
   - `TextureManager`: RAII resource manager for piece textures and result banners.
   - `ChessRenderer`: Responsive board rendering, highlights, and check indicators.
   - `Animation`: Smooth piece movement animations.
-- **`chess-engine` (`src/main.cpp`)**: Interactive GUI application loop.
+- **`chess-engine` (`src/main.cpp`)**: Interactive 2-player local chess GUI.
+- **`play-computer` (`src/play-computer.cpp`)**: Play against the AI engine with a live evaluation sidebar and advantage graph.
 - **`test_chess_core` (`tests/test_chess_core.cpp`)**: Automated unit test suite.
 
 ---
@@ -43,7 +46,12 @@ cmake --build build
 ./build/test_chess_core
 ```
 
-### 3. Launch the Game
+### 3. Play vs Computer (with Live Eval Graph)
+```bash
+./build/play-computer
+```
+
+### 4. Play Local 2-Player Game
 ```bash
 ./build/chess-engine
 ```

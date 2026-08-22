@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "core/Board.hpp"
+#include "core/Eval.hpp"
+#include "core/Search.hpp"
 #include "core/Move.hpp"
 #include "core/MoveGen.hpp"
 #include "core/Notation.hpp"
@@ -112,10 +114,10 @@ int main() {
               }
               std::cout << "\n=== Game Over (Checkmate) ===\n"
                         << history.get_notation() << std::endl;
-            } else if (chess::MoveGen::is_stalemate(board)) {
+            } else if (chess::MoveGen::is_draw(board)) {
               game_result = chess::ui::ResultType::Draw;
               history.record_draw();
-              std::cout << "\n=== Game Over (Stalemate) ===\n"
+              std::cout << "\n=== Game Over (Draw by Stalemate / Insufficient Material) ===\n"
                         << history.get_notation() << std::endl;
             }
           }
@@ -165,12 +167,8 @@ int main() {
       chess_renderer.render_result(renderer, texture_manager, game_result,
                                    width, height);
     }
-    std::vector<chess::Move> moves = chess::MoveGen::get_legal_moves(board);
-    std::cout << moves.size() << std::endl;
-    for (chess::Move x : moves) {
-      std::cout << chess::MoveHistory::format_move(board, x) << std::endl;
-    }
     SDL_RenderPresent(renderer);
+    std::cout << chess::Notation::format_move(board, chess::Search::get_best_move(board, 3)) << std::endl;
   }
 
   // Cleanup managed via RAII and SDL destruction
