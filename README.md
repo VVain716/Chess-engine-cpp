@@ -1,31 +1,49 @@
-# Goal
-Make a decent chess engine solely in c++.
+# Chess Engine (C++)
 
-# Current State
-Chess board and the ruleset have been built
+A modern C++20 chess engine and interactive GUI built using SDL3 and SDL3_image.
 
-# Installing dependencies
-MacOS:
-run
+## Architecture
+
+The project is cleanly decoupled into modular layers:
+
+- **`chess_core` (`include/core/`, `src/core/`)**: Pure C++ chess logic with zero GUI dependencies.
+  - `Types`: Strongly typed enums (`Piece`, `PieceType`, `Color`, `Square`).
+  - `Board`: Board representation, piece placements, state history, and castling rights.
+  - `Move`: Move representations (regular moves, castling, promotions, en passant).
+  - `MoveGen`: Move generation, ray casting, check/checkmate/stalemate detection.
+  - `Notation`: Move notation recorder and algebraic coordinate conversions.
+- **`chess_ui` (`include/ui/`, `src/ui/`)**: Graphics and rendering layer.
+  - `TextureManager`: RAII resource manager for piece textures and result banners.
+  - `ChessRenderer`: Responsive board rendering, highlights, and check indicators.
+  - `Animation`: Smooth piece movement animations.
+- **`chess-engine` (`src/main.cpp`)**: Interactive GUI application loop.
+- **`test_chess_core` (`tests/test_chess_core.cpp`)**: Automated unit test suite.
+
+---
+
+## Prerequisites & Installation
+
+### macOS (Homebrew)
 ```bash
 brew install cmake make sdl3 sdl3_image
 ```
 
-# How to run
-Run
+---
+
+## Build & Run
+
+### 1. Build
 ```bash
 cmake -S . -B build
+cmake --build build
 ```
-This will put all the build files in a directory called build.
 
-Now, move into the build directory and run
+### 2. Run Tests
 ```bash
-make
+./build/test_chess_core
 ```
-This will execute a makefile (built by cmake) that will build the executable file. 
 
-Finally, run
+### 3. Launch the Game
 ```bash
-./chess-engine
-``` 
-to run the executable
+./build/chess-engine
+```
