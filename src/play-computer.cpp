@@ -322,8 +322,10 @@ int main() {
             chess::SearchResult search_res = chess::Search::search(board, AI_SEARCH_DEPTH);
 
             if (search_res.best_move.is_valid()) {
+                double score = search_res.score;
+                score /= -100;
                 std::cout << "[AI Move]: " << chess::Notation::format_move(board, search_res.best_move)
-                          << " (Eval: " << search_res.score
+                          << " (Eval: " << score
                           << " cp, Nodes: " << search_res.nodes << ")" << std::endl;
 
                 history.record_move(board, search_res.best_move);

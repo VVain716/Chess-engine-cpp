@@ -1,5 +1,7 @@
 #include "core/Board.hpp"
 #include <algorithm>
+#include <sstream>
+#include <cctype>
 
 namespace chess {
 
@@ -233,6 +235,136 @@ void Board::undo_move(const Move& move) {
     }
 
     update_king_squares();
+}
+
+bool Board::load_fen(const std::string& fen) {
+    std::istringstream iss(fen);
+    std::string pieces_str, active_color, castling, ep_square;
+    
+    if (!(iss >> pieces_str)) {
+        return false;
+    }
+
+    clear();
+
+    // 1. Piece placement
+    int row = 0;
+    int col = 0;
+    for (char c : pieces_str) {
+        if (c == '/') {
+            row++;
+            col = 0;
+            if (row > 7) break;
+        } else if (std::isdigit(static_cast<unsigned char>(c))) {
+            col += (c - '0');
+        } else {
+            Piece piece = Piece::None;
+            switch (c) {
+                case 'P': piece = Piece::WhitePawn; break;
+                case 'N': piece = Piece::WhiteKnight; break;
+                case 'B': piece = Piece::WhiteBishop; break;
+                case 'R': piece = Piece::WhiteRook; break;
+                case 'Q': piece = Piece::WhiteQueen; break;
+                case 'K': piece = Piece::WhiteKing; break;
+                case 'p': piece = Piece::BlackPawn; break;
+                case 'n': piece = Piece::BlackKnight; break;
+                case 'b': piece = Piece::BlackBishop; break;
+                case 'r': piece = Piece::BlackRook; break;
+                case 'q': piece = Piece::BlackQueen; break;
+                case 'k': piece = Piece::BlackKing; break;
+                default: break;
+            }
+            if (piece != Piece::None && is_valid_square(row, col)) {
+                set_piece(row, col, piece);
+            }
+            col++;
+        }
+    }
+
+    // 2. Active color
+    if (iss >> active_color) {
+        side_to_move_ = (active_color == "b" || active_color == "B") ? Color::Black : Color::White;
+    } else {
+        side_to_move_ = Color::White;
+    }
+
+    // 3. Castling rights
+    castling_ = CastlingRights{false, false, false, false};
+    if (iss >> castling) {
+        if (castling != "-") {
+            for (char c : castling) {
+                if (c == 'K') castling_.white_kingside = true;
+                else if (c == 'Q') castling_.white_queenside = true;
+                else if (c == 'k') castling_.black_kingside = true;
+                else if (c == 'q') castling_.black_queenside = true;
+            }
+        }
+    }
+
+    // 4. En passant square
+    en_passant_sq_ = SQ_NONE;
+    if (iss >> ep_square) {
+        if (ep_square != "-") {
+            auto sq = square_from_algebraic(ep_square);
+            if (sq.has_value()) {
+                en_passant_sq_ = *sq;
+            }
+        }
+    }
+
+    update_king_squares();
+    history_.clear();
+    return true;
+}
+
+std::string Board::to_fen() const {
+    std::string fen;
+    // 1. Piece placement
+    for (int r = 0; r < 8; ++r) {
+        int empty_count = 0;
+        for (int c = 0; c < 8; ++c) {
+            Piece p = get_piece(r, c);
+            if (p == Piece::None) {
+                empty_count++;
+            } else {
+                if (empty_count > 0) {
+                    fen += std::to_string(empty_count);
+                    empty_count = 0;
+                }
+                fen += piece_to_char(p);
+            }
+        }
+        if (empty_count > 0) {
+            fen += std::to_string(empty_count);
+        }
+        if (r < 7) {
+            fen += '/';
+        }
+    }
+
+    // 2. Side to move
+    fen += (side_to_move_ == Color::White) ? " w " : " b ";
+
+    // 3. Castling rights
+    std::string castling_str;
+    if (castling_.white_kingside) castling_str += 'K';
+    if (castling_.white_queenside) castling_str += 'Q';
+    if (castling_.black_kingside) castling_str += 'k';
+    if (castling_.black_queenside) castling_str += 'q';
+    if (castling_str.empty()) castling_str = "-";
+    fen += castling_str + " ";
+
+    // 4. En passant square
+    if (en_passant_sq_ != SQ_NONE) {
+        fen += square_to_algebraic(en_passant_sq_);
+    } else {
+        fen += "-";
+    }
+
+    // 5. Halfmove clock and fullmove number
+    fen += " 0 1";
+
+    return fen;
 }
 
 } // namespace chess

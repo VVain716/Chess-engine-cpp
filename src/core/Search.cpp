@@ -58,8 +58,25 @@ void Search::order_moves(std::vector<Move>& moves, const Board& board) {
     });
 }
 
-int Search::quiescence(Board& board, int alpha, int beta, int& nodes) {
+bool Search::check_time(int nodes, const std::chrono::steady_clock::time_point& start_time, int time_limit_ms) {
+    if (time_limit_ms <= 0) return false;
+    // Check every 1024 nodes to balance responsiveness and clock query overhead
+    if ((nodes & 1023) == 0) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count();
+        if (elapsed >= time_limit_ms) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int Search::quiescence(Board& board, int alpha, int beta, int& nodes, const std::chrono::steady_clock::time_point& start_time, int time_limit_ms, bool& stopped) {
     ++nodes;
+
+    if (check_time(nodes, start_time, time_limit_ms)) {
+        stopped = true;
+        return alpha;
+    }
 
     bool in_check = MoveGen::is_in_check(board, board.side_to_move());
 
@@ -93,8 +110,12 @@ int Search::quiescence(Board& board, int alpha, int beta, int& nodes) {
 
     for (const auto& move : tactical_moves) {
         board.make_move(move);
-        int score = -quiescence(board, -beta, -alpha, nodes);
+        int score = -quiescence(board, -beta, -alpha, nodes, start_time, time_limit_ms, stopped);
         board.undo_move(move);
+
+        if (stopped) {
+            return alpha;
+        }
 
         if (score >= beta) {
             return beta;
@@ -107,11 +128,16 @@ int Search::quiescence(Board& board, int alpha, int beta, int& nodes) {
     return alpha;
 }
 
-int Search::negamax(Board& board, int depth, int ply, int alpha, int beta, int& nodes, Move& best_move_root) {
+int Search::negamax(Board& board, int depth, int ply, int alpha, int beta, int& nodes, Move& best_move_root, const std::chrono::steady_clock::time_point& start_time, int time_limit_ms, bool& stopped) {
     ++nodes;
 
+    if (check_time(nodes, start_time, time_limit_ms)) {
+        stopped = true;
+        return alpha;
+    }
+
     if (depth <= 0) {
-        return quiescence(board, alpha, beta, nodes);
+        return quiescence(board, alpha, beta, nodes, start_time, time_limit_ms, stopped);
     }
 
     auto moves = MoveGen::generate_legal_moves(board);
@@ -131,8 +157,12 @@ int Search::negamax(Board& board, int depth, int ply, int alpha, int beta, int& 
     for (const auto& move : moves) {
         board.make_move(move);
         Move dummy;
-        int score = -negamax(board, depth - 1, ply + 1, -beta, -alpha, nodes, dummy);
+        int score = -negamax(board, depth - 1, ply + 1, -beta, -alpha, nodes, dummy, start_time, time_limit_ms, stopped);
         board.undo_move(move);
+
+        if (stopped) {
+            return best_score;
+        }
 
         if (score > best_score) {
             best_score = score;
@@ -158,26 +188,46 @@ int Search::negamax(Board& board, int depth, int ply, int alpha, int beta, int& 
     return best_score;
 }
 
-SearchResult Search::search(Board& board, int depth) {
+SearchResult Search::search(Board& board, int depth, int time_limit_ms) {
     SearchResult result;
-    result.depth = depth;
+    result.depth = 0;
     result.nodes = 0;
 
-    Move best_move;
+    auto legals = MoveGen::generate_legal_moves(board);
+    if (legals.empty()) {
+        return result;
+    }
+    Move best_move = legals.front();
+
+    auto start_time = std::chrono::steady_clock::now();
+    bool stopped = false;
 
     // Iterative Deepening from depth 1 to target depth
     for (int d = 1; d <= depth; ++d) {
         Move current_d_move;
-        int score = negamax(board, d, 0, -INFINITY_SCORE, INFINITY_SCORE, result.nodes, current_d_move);
+        int score = negamax(board, d, 0, -INFINITY_SCORE, INFINITY_SCORE, result.nodes, current_d_move, start_time, time_limit_ms, stopped);
+
+        if (stopped) {
+            break; // Stop and use best_move from previous completed iteration
+        }
 
         if (current_d_move.is_valid()) {
             best_move = current_d_move;
             result.score = score;
+            result.depth = d;
         }
 
         // If checkmate found, can stop early
         if (score > MATE_SCORE - 100 || score < -MATE_SCORE + 100) {
             break;
+        }
+
+        // If we spent more than 40% of our allocated time on this iteration, starting the next deeper iteration will likely exceed time limit
+        if (time_limit_ms > 0) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count();
+            if (elapsed >= (time_limit_ms * 4) / 10) {
+                break;
+            }
         }
     }
 
@@ -185,8 +235,8 @@ SearchResult Search::search(Board& board, int depth) {
     return result;
 }
 
-Move Search::get_best_move(Board& board, int depth) {
-    return search(board, depth).best_move;
+Move Search::get_best_move(Board& board, int depth, int time_limit_ms) {
+    return search(board, depth, time_limit_ms).best_move;
 }
 
 int Search::minmax_eval(Board &board, int depth) {

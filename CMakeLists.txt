@@ -45,7 +45,7 @@ target_link_libraries(play-computer PRIVATE chess_ui chess_core SDL3::SDL3 SDL3_
 target_compile_options(play-computer PRIVATE -Wall -Wextra -Wpedantic)
 target_compile_definitions(play-computer PRIVATE CHESS_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
-# Unit Tests Executable
-add_executable(test_chess_core tests/test_chess_core.cpp)
-target_link_libraries(test_chess_core PRIVATE chess_core)
-target_compile_options(test_chess_core PRIVATE -Wall -Wextra -Wpedantic)
+# UCI Engine Executable (Headless, standard chess protocol)
+add_executable(chess-uci src/uci.cpp)
+target_link_libraries(chess-uci PRIVATE chess_core)
+target_compile_options(chess-uci PRIVATE -Wall -Wextra -Wpedantic)

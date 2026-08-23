@@ -57,6 +57,9 @@ public:
     bool make_move(const Move& move);
     void undo_move(const Move& move);
 
+    bool load_fen(const std::string& fen);
+    [[nodiscard]] std::string to_fen() const;
+
     // Helpers to find king square dynamically if needed
     void update_king_squares();
 };
