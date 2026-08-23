@@ -55,3 +55,8 @@ cmake --build build
 ```bash
 ./build/chess-engine
 ```
+
+
+
+# Play on Lichess 
+If you don't want to go through all that hassle and just play on lichess, just search for VVainBot on lichess and play!
