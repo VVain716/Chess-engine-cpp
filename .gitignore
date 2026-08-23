@@ -3,4 +3,9 @@ build/
 .cache/
 .DS_Store
 lichess/
-fastchess/
+results/
+.clangd
+compile_commands.json
+lichess_bot_auto_logs/
+cutechess/
+test-engines/
