@@ -312,7 +312,7 @@ int Eval::Endgame::KingValue(int row, int col) {
 }
 
 // ============================================================================
-// Phase & General Evaluation
+// Phase & Positional / Structural Evaluations
 // ============================================================================
 
 int Eval::get_game_phase(const Board &board) {
@@ -341,12 +341,493 @@ int Eval::get_game_phase(const Board &board) {
   return piece_count;
 }
 
+std::pair<int, int> Eval::evaluate_pawns(const Board &board, Color color) {
+  int mg = 0;
+  int eg = 0;
+
+  Color opp_color = opponent_color(color);
+  Piece friendly_pawn = make_piece(color, PieceType::Pawn);
+  Piece enemy_pawn = make_piece(opp_color, PieceType::Pawn);
+
+  int friendly_pawn_counts[8] = {0};
+  int enemy_pawn_counts[8] = {0};
+  std::vector<std::pair<int, int>> friendly_pawns;
+  friendly_pawns.reserve(8);
+
+  for (int r = 0; r < 8; ++r) {
+    for (int c = 0; c < 8; ++c) {
+      Piece p = board.get_piece(r, c);
+      if (p == friendly_pawn) {
+        friendly_pawn_counts[c]++;
+        friendly_pawns.push_back({r, c});
+      } else if (p == enemy_pawn) {
+        enemy_pawn_counts[c]++;
+      }
+    }
+  }
+
+  // 1. Doubled Pawns
+  for (int c = 0; c < 8; ++c) {
+    if (friendly_pawn_counts[c] > 1) {
+      int extra = friendly_pawn_counts[c] - 1;
+      mg -= extra * 15;
+      eg -= extra * 20;
+    }
+  }
+
+  // 2. Pawn Islands
+  int islands = 0;
+  bool in_island = false;
+  for (int c = 0; c < 8; ++c) {
+    if (friendly_pawn_counts[c] > 0) {
+      if (!in_island) {
+        islands++;
+        in_island = true;
+      }
+    } else {
+      in_island = false;
+    }
+  }
+  if (islands > 1) {
+    mg -= (islands - 1) * 12;
+    eg -= (islands - 1) * 15;
+  }
+
+  // 3. Isolated, Backward, Passed & Protected Passed Pawns
+  for (const auto &[r, c] : friendly_pawns) {
+    // Isolated pawn check
+    bool left_has = (c > 0 && friendly_pawn_counts[c - 1] > 0);
+    bool right_has = (c < 7 && friendly_pawn_counts[c + 1] > 0);
+    bool is_isolated = (!left_has && !right_has);
+
+    if (is_isolated) {
+      mg -= 15;
+      eg -= 20;
+    } else {
+      // Backward pawn check: no friendly pawn on adjacent files at/behind this rank
+      bool has_friendly_behind_or_same = false;
+      if (color == Color::White) {
+        for (const auto &[fr, fc] : friendly_pawns) {
+          if ((fc == c - 1 || fc == c + 1) && fr >= r) {
+            has_friendly_behind_or_same = true;
+            break;
+          }
+        }
+      } else {
+        for (const auto &[fr, fc] : friendly_pawns) {
+          if ((fc == c - 1 || fc == c + 1) && fr <= r) {
+            has_friendly_behind_or_same = true;
+            break;
+          }
+        }
+      }
+
+      if (!has_friendly_behind_or_same) {
+        // Stop square in front attacked by enemy pawn
+        bool stop_attacked = false;
+        if (color == Color::White) {
+          if (r - 2 >= 0) {
+            if (c - 1 >= 0 && board.get_piece(r - 2, c - 1) == enemy_pawn)
+              stop_attacked = true;
+            if (c + 1 < 8 && board.get_piece(r - 2, c + 1) == enemy_pawn)
+              stop_attacked = true;
+          }
+        } else {
+          if (r + 2 < 8) {
+            if (c - 1 >= 0 && board.get_piece(r + 2, c - 1) == enemy_pawn)
+              stop_attacked = true;
+            if (c + 1 < 8 && board.get_piece(r + 2, c + 1) == enemy_pawn)
+              stop_attacked = true;
+          }
+        }
+
+        if (stop_attacked) {
+          mg -= 15;
+          eg -= 15;
+        }
+      }
+    }
+
+    // Passed pawn check: no enemy pawns on c-1, c, c+1 ahead
+    bool is_passed = true;
+    if (color == Color::White) {
+      for (int er = 0; er < r; ++er) {
+        if (c - 1 >= 0 && board.get_piece(er, c - 1) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+        if (board.get_piece(er, c) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+        if (c + 1 < 8 && board.get_piece(er, c + 1) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+      }
+    } else {
+      for (int er = r + 1; er < 8; ++er) {
+        if (c - 1 >= 0 && board.get_piece(er, c - 1) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+        if (board.get_piece(er, c) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+        if (c + 1 < 8 && board.get_piece(er, c + 1) == enemy_pawn) {
+          is_passed = false;
+          break;
+        }
+      }
+    }
+
+    if (is_passed) {
+      int rank = (color == Color::White ? (7 - r) : r);
+      constexpr int passed_mg[8] = {0, 0, 5, 10, 20, 40, 70, 120};
+      constexpr int passed_eg[8] = {0, 0, 10, 20, 35, 60, 100, 160};
+      if (rank >= 0 && rank < 8) {
+        mg += passed_mg[rank];
+        eg += passed_eg[rank];
+      }
+
+      // Protected passed pawn check
+      bool is_protected = false;
+      if (color == Color::White) {
+        if (r + 1 < 8) {
+          if (c - 1 >= 0 && board.get_piece(r + 1, c - 1) == friendly_pawn)
+            is_protected = true;
+          if (c + 1 < 8 && board.get_piece(r + 1, c + 1) == friendly_pawn)
+            is_protected = true;
+        }
+      } else {
+        if (r - 1 >= 0) {
+          if (c - 1 >= 0 && board.get_piece(r - 1, c - 1) == friendly_pawn)
+            is_protected = true;
+          if (c + 1 < 8 && board.get_piece(r - 1, c + 1) == friendly_pawn)
+            is_protected = true;
+        }
+      }
+
+      if (is_protected) {
+        mg += 20;
+        eg += 30;
+      }
+    }
+  }
+
+  return {mg, eg};
+}
+
+std::pair<int, int> Eval::evaluate_rooks(const Board &board, Color color) {
+  int mg = 0;
+  int eg = 0;
+
+  Color opp_color = opponent_color(color);
+  Piece friendly_rook = make_piece(color, PieceType::Rook);
+  Piece friendly_pawn = make_piece(color, PieceType::Pawn);
+  Piece enemy_pawn = make_piece(opp_color, PieceType::Pawn);
+  Square enemy_king_sq = board.king_square(opp_color);
+
+  for (int r = 0; r < 8; ++r) {
+    for (int c = 0; c < 8; ++c) {
+      if (board.get_piece(r, c) != friendly_rook)
+        continue;
+
+      // 1. Open and Semi-Open Files
+      int friendly_pawns = 0;
+      int enemy_pawns = 0;
+      for (int row_i = 0; row_i < 8; ++row_i) {
+        Piece p = board.get_piece(row_i, c);
+        if (p == friendly_pawn)
+          friendly_pawns++;
+        else if (p == enemy_pawn)
+          enemy_pawns++;
+      }
+
+      if (friendly_pawns == 0 && enemy_pawns == 0) {
+        mg += 25;
+        eg += 20; // Open file
+      } else if (friendly_pawns == 0 && enemy_pawns > 0) {
+        mg += 12;
+        eg += 10; // Semi-open file
+      }
+
+      // 2. 7th Rank
+      bool is_7th = (color == Color::White ? (r == 1) : (r == 6));
+      if (is_7th) {
+        mg += 30;
+        eg += 40;
+        if (is_valid_square(enemy_king_sq)) {
+          int ek_row = square_row(enemy_king_sq);
+          if ((color == Color::White && ek_row <= 1) ||
+              (color == Color::Black && ek_row >= 6)) {
+            mg += 10;
+            eg += 15;
+          }
+        }
+      }
+
+      // 3. Trapped Rook in Corner
+      int mobility = 0;
+      constexpr int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+      for (const auto &[dr, dc] : dirs) {
+        int cr = r + dr;
+        int cc = c + dc;
+        while (is_valid_square(cr, cc)) {
+          Piece p = board.get_piece(cr, cc);
+          if (p == Piece::None) {
+            mobility++;
+          } else {
+            if (piece_color(p) != color)
+              mobility++;
+            break;
+          }
+          cr += dr;
+          cc += dc;
+        }
+      }
+
+      if (mobility <= 1) {
+        if ((color == Color::White && r >= 6 &&
+             (c == 0 || c == 7 || c == 1 || c == 6)) ||
+            (color == Color::Black && r <= 1 &&
+             (c == 0 || c == 7 || c == 1 || c == 6))) {
+          mg -= 30;
+          eg -= 20;
+        }
+      }
+    }
+  }
+
+  return {mg, eg};
+}
+
+std::pair<int, int> Eval::evaluate_bishops(const Board &board, Color color,
+                                           int total_pawns) {
+  int mg = 0;
+  int eg = 0;
+
+  Piece friendly_bishop = make_piece(color, PieceType::Bishop);
+
+  for (int r = 0; r < 8; ++r) {
+    for (int c = 0; c < 8; ++c) {
+      if (board.get_piece(r, c) != friendly_bishop)
+        continue;
+
+      // 1. Mobility and Long Diagonals
+      int mobility = 0;
+      constexpr int dirs[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+      for (const auto &[dr, dc] : dirs) {
+        int cr = r + dr;
+        int cc = c + dc;
+        while (is_valid_square(cr, cc)) {
+          Piece p = board.get_piece(cr, cc);
+          if (p == Piece::None) {
+            mobility++;
+          } else {
+            if (piece_color(p) != color)
+              mobility++;
+            break;
+          }
+          cr += dr;
+          cc += dc;
+        }
+      }
+
+      mg += mobility * 4;
+      eg += mobility * 4;
+
+      // Long diagonal bonus (major diagonals of length 7 or 8)
+      int diff = r - c;
+      int sum = r + c;
+      if (std::abs(diff) <= 1 || sum == 6 || sum == 7 || sum == 8) {
+        if (mobility >= 4) {
+          mg += 10;
+          eg += 10;
+        }
+      }
+
+      // 2. Closed Positions Penalty
+      if (total_pawns >= 12) {
+        mg -= 15;
+        eg -= 15;
+      }
+      bool e_locked = (board.get_piece(4, 4) == Piece::WhitePawn &&
+                       board.get_piece(3, 4) == Piece::BlackPawn);
+      bool d_locked = (board.get_piece(4, 3) == Piece::WhitePawn &&
+                       board.get_piece(3, 3) == Piece::BlackPawn);
+      if (e_locked || d_locked) {
+        mg -= 10;
+        eg -= 10;
+      }
+    }
+  }
+
+  return {mg, eg};
+}
+
+std::pair<int, int> Eval::evaluate_knights(const Board &board, Color color,
+                                           int total_pawns) {
+  int mg = 0;
+  int eg = 0;
+
+  Piece friendly_knight = make_piece(color, PieceType::Knight);
+  Piece friendly_pawn = make_piece(color, PieceType::Pawn);
+  Piece enemy_pawn = make_piece(opponent_color(color), PieceType::Pawn);
+
+  for (int r = 0; r < 8; ++r) {
+    for (int c = 0; c < 8; ++c) {
+      if (board.get_piece(r, c) != friendly_knight)
+        continue;
+
+      // 1. Centralization
+      if (r >= 2 && r <= 5 && c >= 2 && c <= 5) {
+        mg += 10;
+        eg += 5;
+      }
+
+      // 2. Outposts (ranks 4, 5, 6 defended by pawn and cannot be attacked by enemy pawns)
+      bool is_outpost_rank = (color == Color::White ? (r >= 2 && r <= 4)
+                                                    : (r >= 3 && r <= 5));
+      if (is_outpost_rank && c >= 1 && c <= 6) {
+        bool defended_by_pawn = false;
+        if (color == Color::White) {
+          if ((r + 1 < 8 && c - 1 >= 0 &&
+               board.get_piece(r + 1, c - 1) == friendly_pawn) ||
+              (r + 1 < 8 && c + 1 < 8 &&
+               board.get_piece(r + 1, c + 1) == friendly_pawn)) {
+            defended_by_pawn = true;
+          }
+        } else {
+          if ((r - 1 >= 0 && c - 1 >= 0 &&
+               board.get_piece(r - 1, c - 1) == friendly_pawn) ||
+              (r - 1 >= 0 && c + 1 < 8 &&
+               board.get_piece(r - 1, c + 1) == friendly_pawn)) {
+            defended_by_pawn = true;
+          }
+        }
+
+        if (defended_by_pawn) {
+          bool can_be_attacked_by_pawn = false;
+          if (color == Color::White) {
+            for (int er = 0; er <= r; ++er) {
+              if (c - 1 >= 0 && board.get_piece(er, c - 1) == enemy_pawn)
+                can_be_attacked_by_pawn = true;
+              if (c + 1 < 8 && board.get_piece(er, c + 1) == enemy_pawn)
+                can_be_attacked_by_pawn = true;
+            }
+          } else {
+            for (int er = r; er < 8; ++er) {
+              if (c - 1 >= 0 && board.get_piece(er, c - 1) == enemy_pawn)
+                can_be_attacked_by_pawn = true;
+              if (c + 1 < 8 && board.get_piece(er, c + 1) == enemy_pawn)
+                can_be_attacked_by_pawn = true;
+            }
+          }
+
+          if (!can_be_attacked_by_pawn) {
+            mg += 30;
+            eg += 20;
+          }
+        }
+      }
+
+      // 3. Closed vs Open positions
+      if (total_pawns >= 12) {
+        mg += 15;
+        eg += 10;
+      } else if (total_pawns <= 8) {
+        mg -= 15;
+        eg -= 15;
+      }
+    }
+  }
+
+  return {mg, eg};
+}
+
+std::pair<int, int> Eval::evaluate_king(const Board &board, Color color) {
+  int mg = 0;
+  int eg = 0;
+
+  Square king_sq = board.king_square(color);
+  if (!is_valid_square(king_sq))
+    return {0, 0};
+
+  int kr = square_row(king_sq);
+  int kc = square_col(king_sq);
+  Piece friendly_pawn = make_piece(color, PieceType::Pawn);
+  Piece enemy_pawn = make_piece(opponent_color(color), PieceType::Pawn);
+
+  // 1. Middlegame King Pawn Shield
+  if (color == Color::White && kr >= 5) {
+    for (int c = std::max(0, kc - 1); c <= std::min(7, kc + 1); ++c) {
+      bool shield = false;
+      for (int r = kr - 1; r >= std::max(0, kr - 2); --r) {
+        if (board.get_piece(r, c) == friendly_pawn) {
+          shield = true;
+          break;
+        }
+      }
+      if (!shield) {
+        mg -= 15;
+      }
+    }
+  } else if (color == Color::Black && kr <= 2) {
+    for (int c = std::max(0, kc - 1); c <= std::min(7, kc + 1); ++c) {
+      bool shield = false;
+      for (int r = kr + 1; r <= std::min(7, kr + 2); ++r) {
+        if (board.get_piece(r, c) == friendly_pawn) {
+          shield = true;
+          break;
+        }
+      }
+      if (!shield) {
+        mg -= 15;
+      }
+    }
+  }
+
+  // 2. King on Open / Semi-Open Files (Middlegame)
+  int friendly_pawns = 0;
+  int enemy_pawns = 0;
+  for (int r = 0; r < 8; ++r) {
+    Piece p = board.get_piece(r, kc);
+    if (p == friendly_pawn)
+      friendly_pawns++;
+    else if (p == enemy_pawn)
+      enemy_pawns++;
+  }
+  if (friendly_pawns == 0 && enemy_pawns == 0) {
+    mg -= 35;
+  } else if (friendly_pawns == 0 && enemy_pawns > 0) {
+    mg -= 20;
+  }
+
+  // 3. Endgame King Centralization
+  int dist_r = std::min(std::abs(kr - 3), std::abs(kr - 4));
+  int dist_c = std::min(std::abs(kc - 3), std::abs(kc - 4));
+  int center_dist = dist_r + dist_c;
+  eg += (6 - center_dist) * 5;
+
+  return {mg, eg};
+}
+
 int Eval::white_eval(const Board &board) {
   int mg = 0;
   int eg = 0;
+  int total_pawns = 0;
+
   for (Square sq = 0; sq < 64; ++sq) {
     Piece piece = board.get_piece(sq);
-    if (piece == Piece::None || piece_color(piece) != Color::White)
+    if (piece == Piece::None)
+      continue;
+
+    if (piece_type(piece) == PieceType::Pawn)
+      total_pawns++;
+
+    if (piece_color(piece) != Color::White)
       continue;
 
     switch (piece_type(piece)) {
@@ -378,6 +859,19 @@ int Eval::white_eval(const Board &board) {
       break;
     }
   }
+
+  // Positional and structural terms
+  auto [pawn_mg, pawn_eg] = evaluate_pawns(board, Color::White);
+  auto [rook_mg, rook_eg] = evaluate_rooks(board, Color::White);
+  auto [bishop_mg, bishop_eg] =
+      evaluate_bishops(board, Color::White, total_pawns);
+  auto [knight_mg, knight_eg] =
+      evaluate_knights(board, Color::White, total_pawns);
+  auto [king_mg, king_eg] = evaluate_king(board, Color::White);
+
+  mg += pawn_mg + rook_mg + bishop_mg + knight_mg + king_mg;
+  eg += pawn_eg + rook_eg + bishop_eg + knight_eg + king_eg;
+
   int phase = get_game_phase(board);
   if (phase > 24)
     phase = 24;
@@ -387,9 +881,17 @@ int Eval::white_eval(const Board &board) {
 int Eval::black_eval(const Board &board) {
   int mg = 0;
   int eg = 0;
+  int total_pawns = 0;
+
   for (Square sq = 0; sq < 64; ++sq) {
     Piece piece = board.get_piece(sq);
-    if (piece == Piece::None || piece_color(piece) != Color::Black)
+    if (piece == Piece::None)
+      continue;
+
+    if (piece_type(piece) == PieceType::Pawn)
+      total_pawns++;
+
+    if (piece_color(piece) != Color::Black)
       continue;
 
     int r = 7 - square_row(sq);
@@ -424,6 +926,19 @@ int Eval::black_eval(const Board &board) {
       break;
     }
   }
+
+  // Positional and structural terms
+  auto [pawn_mg, pawn_eg] = evaluate_pawns(board, Color::Black);
+  auto [rook_mg, rook_eg] = evaluate_rooks(board, Color::Black);
+  auto [bishop_mg, bishop_eg] =
+      evaluate_bishops(board, Color::Black, total_pawns);
+  auto [knight_mg, knight_eg] =
+      evaluate_knights(board, Color::Black, total_pawns);
+  auto [king_mg, king_eg] = evaluate_king(board, Color::Black);
+
+  mg += pawn_mg + rook_mg + bishop_mg + knight_mg + king_mg;
+  eg += pawn_eg + rook_eg + bishop_eg + knight_eg + king_eg;
+
   int phase = get_game_phase(board);
   if (phase > 24)
     phase = 24;

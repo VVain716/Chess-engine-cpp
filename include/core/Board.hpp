@@ -19,6 +19,7 @@ struct BoardState {
     CastlingRights castling;
     Square en_passant_square = SQ_NONE;
     Piece captured_piece = Piece::None;
+    uint64_t hash = 0;
 };
 
 class Board {
@@ -29,6 +30,7 @@ private:
     Square en_passant_sq_ = SQ_NONE;
     Square white_king_sq_ = make_square(7, 4);
     Square black_king_sq_ = make_square(0, 4);
+    uint64_t hash_ = 0;
 
     std::vector<BoardState> history_{};
 
@@ -54,8 +56,14 @@ public:
     [[nodiscard]] Square en_passant_square() const { return en_passant_sq_; }
     void set_en_passant_square(Square sq) { en_passant_sq_ = sq; }
 
+    [[nodiscard]] uint64_t hash() const { return hash_; }
+    [[nodiscard]] uint64_t compute_hash() const;
+
     bool make_move(const Move& move);
     void undo_move(const Move& move);
+
+    void make_null_move();
+    void undo_null_move();
 
     bool load_fen(const std::string& fen);
     [[nodiscard]] std::string to_fen() const;

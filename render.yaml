@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: chess-engine-lichess-bot
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: LICHESS_BOT_TOKEN
+        sync: false

@@ -1,0 +1,22 @@
+Pawn Structure:
+    - Have evaluations that penalize players that have doubled pawns, backward pawns, isolated pawns and multiple different pawn islands.
+    - Reward people for passed pawns/protected passed pawns
+
+Rooks:
+    - Reward rooks on open files.
+    - Reward rooks on the 7th rank
+    - Penalize rooks that are trapped in the corner. 
+
+Bishops:
+    - Reward Bishops for being on long diagonals and reward for the amount of squares that the bishops can cover
+    - Penalize bishops in closed positions
+Knights:
+    - Reward knights for being centralized and in outposts (places that can never be attacked by pawns)
+    - Reward knights for being present in closed positions (not much mobility)
+    - Penalize Knights in open positions
+
+Kings:
+    - In middlegame, penalize kings for being exposed (not having pawns in front of them)
+    - Penalize kings for being on open files.
+    - Reward kings for being centralized in the endgame.
+

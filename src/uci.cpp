@@ -142,9 +142,22 @@ int main() {
     } else if (command == "isready") {
       std::cout << "readyok\n" << std::endl;
     } else if (command == "setoption") {
-      // Acknowledge setoption (placeholder for future options)
+      std::string name_token, opt_name, value_token;
+      if (iss >> name_token && name_token == "name") {
+        std::string name;
+        while (iss >> name && name != "value") {
+          opt_name = name;
+        }
+        if (opt_name == "Hash") {
+          int mb = 16;
+          if (iss >> mb) {
+            chess::Search::resize_tt(mb);
+          }
+        }
+      }
     } else if (command == "ucinewgame") {
       board.reset_to_starting_position();
+      chess::Search::clear_tt();
     } else if (command == "position") {
       std::string subcmd;
       iss >> subcmd;
@@ -233,15 +246,12 @@ int main() {
         }
       }
 
-      auto result = chess::Search::search(board, depth, time_limit_ms);
+      auto result = chess::Search::search(board, depth, time_limit_ms, true);
       if (result.best_move.is_valid()) {
-        std::cout << "info depth " << result.depth << " score cp "
-                  << result.score << " nodes " << result.nodes << " pv "
-                  << move_to_uci(result.best_move) << "\n";
         std::cout << "bestmove " << move_to_uci(result.best_move) << "\n"
                   << std::endl;
       } else {
-        // If no legal move found, pick any legal move or 0000
+        // If no legal move found, pick any legal move or none
         auto legals = chess::MoveGen::generate_legal_moves(board);
         if (!legals.empty()) {
           std::cout << "bestmove " << move_to_uci(legals.front()) << "\n"

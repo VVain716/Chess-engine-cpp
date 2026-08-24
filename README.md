@@ -58,5 +58,28 @@ cmake --build build
 
 
 
-# Play on Lichess 
-If you don't want to go through all that hassle and just play on lichess, just search for VVainBot on lichess and play!
+
+## Play on Lichess 
+Search for **VVainBot** on Lichess to play against the bot directly!
+
+---
+
+## Deploying to Render
+
+You can host the Lichess bot 24/7 on [Render](https://render.com) using either Docker or Native environment:
+
+### Option 1: Docker Deployment (Recommended)
+1. In Render, click **New +** -> **Web Service** (or **Background Worker**).
+2. Connect your GitHub repository.
+3. Select **Docker** as the Runtime.
+4. Under **Environment Variables**, add:
+   - `LICHESS_BOT_TOKEN`: `<Your Lichess OAuth Token>`
+5. Click **Deploy Web Service**.
+
+### Option 2: Native Build
+1. In Render, create a new **Web Service**.
+2. Set **Build Command**: `./build.sh`
+3. Set **Start Command**: `./start.sh`
+4. Add environment variable `LICHESS_BOT_TOKEN`.
+5. Click **Deploy**.
+

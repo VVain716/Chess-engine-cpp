@@ -1,9 +1,36 @@
 #include "core/Board.hpp"
+#include "core/Zobrist.hpp"
 #include <algorithm>
 #include <sstream>
 #include <cctype>
 
 namespace chess {
+
+uint64_t Board::compute_hash() const {
+    Zobrist::init();
+    uint64_t h = 0;
+    for (Square sq = 0; sq < 64; ++sq) {
+        Piece p = squares_[sq];
+        if (p != Piece::None) {
+            h ^= Zobrist::piece_keys[static_cast<size_t>(p)][sq];
+        }
+    }
+    if (side_to_move_ == Color::Black) {
+        h ^= Zobrist::side_key;
+    }
+    int castling_idx = (castling_.white_kingside ? 1 : 0) |
+                       (castling_.white_queenside ? 2 : 0) |
+                       (castling_.black_kingside ? 4 : 0) |
+                       (castling_.black_queenside ? 8 : 0);
+    h ^= Zobrist::castling_keys[castling_idx];
+    if (en_passant_sq_ != SQ_NONE) {
+        int ep_col = square_col(en_passant_sq_);
+        if (ep_col >= 0 && ep_col < 8) {
+            h ^= Zobrist::en_passant_keys[ep_col];
+        }
+    }
+    return h;
+}
 
 Board::Board() {
     reset_to_starting_position();
@@ -17,6 +44,7 @@ void Board::clear() {
     white_king_sq_ = SQ_NONE;
     black_king_sq_ = SQ_NONE;
     history_.clear();
+    hash_ = compute_hash();
 }
 
 void Board::reset_to_starting_position() {
@@ -54,6 +82,7 @@ void Board::reset_to_starting_position() {
     white_king_sq_ = make_square(7, 4);
     black_king_sq_ = make_square(0, 4);
     history_.clear();
+    hash_ = compute_hash();
 }
 
 Piece Board::get_piece(Square sq) const {
@@ -104,6 +133,7 @@ bool Board::make_move(const Move& move) {
     state.castling = castling_;
     state.en_passant_square = en_passant_sq_;
     state.captured_piece = captured_piece;
+    state.hash = hash_;
     history_.push_back(state);
 
     // Reset en passant
@@ -179,6 +209,7 @@ bool Board::make_move(const Move& move) {
     if (move.from == make_square(0, 7) || move.to == make_square(0, 7)) castling_.black_kingside = false;
 
     switch_turn();
+    hash_ = compute_hash();
     return true;
 }
 
@@ -235,6 +266,32 @@ void Board::undo_move(const Move& move) {
     }
 
     update_king_squares();
+    hash_ = prev_state.hash;
+}
+
+void Board::make_null_move() {
+    BoardState state;
+    state.castling = castling_;
+    state.en_passant_square = en_passant_sq_;
+    state.captured_piece = Piece::None;
+    state.hash = hash_;
+    history_.push_back(state);
+
+    en_passant_sq_ = SQ_NONE;
+    switch_turn();
+    hash_ = compute_hash();
+}
+
+void Board::undo_null_move() {
+    if (history_.empty()) return;
+
+    BoardState prev_state = history_.back();
+    history_.pop_back();
+
+    castling_ = prev_state.castling;
+    en_passant_sq_ = prev_state.en_passant_square;
+    switch_turn();
+    hash_ = prev_state.hash;
 }
 
 bool Board::load_fen(const std::string& fen) {
@@ -314,6 +371,7 @@ bool Board::load_fen(const std::string& fen) {
 
     update_king_squares();
     history_.clear();
+    hash_ = compute_hash();
     return true;
 }
 

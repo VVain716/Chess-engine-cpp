@@ -62,6 +62,14 @@ public:
     static int white_eval(const Board &board);
     static int black_eval(const Board &board);
     static int evaluate(const Board &board);
+
+    // Positional / Structural evaluation terms
+    static std::pair<int, int> evaluate_pawns(const Board &board, Color color);
+    static std::pair<int, int> evaluate_rooks(const Board &board, Color color);
+    static std::pair<int, int> evaluate_bishops(const Board &board, Color color, int total_pawns);
+    static std::pair<int, int> evaluate_knights(const Board &board, Color color, int total_pawns);
+    static std::pair<int, int> evaluate_king(const Board &board, Color color);
 };
 
 } // namespace chess
+

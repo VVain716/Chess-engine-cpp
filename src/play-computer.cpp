@@ -333,7 +333,7 @@ int main() {
                                                    texture_manager, chess_renderer, board_w, total_h);
                 board.make_move(search_res.best_move);
 
-                current_eval = chess::Search::minmax_eval(board, AI_SEARCH_DEPTH);
+                current_eval = -search_res.score;
                 eval_history.push_back(current_eval);
 
                 // Render immediately after making the move
