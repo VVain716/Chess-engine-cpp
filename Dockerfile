@@ -10,8 +10,8 @@ COPY include/ ./include/
 COPY src/core/ ./src/core/
 COPY src/uci.cpp ./src/uci.cpp
 
-# Compile standalone chess-uci executable with C++20 and -O3
-RUN g++ -std=c++20 -O3 -Wall -Wextra -Iinclude \
+# Compile standalone chess-uci executable with C++20, -O3, and static libstdc++
+RUN g++ -std=c++20 -O3 -Wall -Wextra -static-libstdc++ -static-libgcc -Iinclude \
     src/core/Types.cpp \
     src/core/Board.cpp \
     src/core/MoveGen.cpp \

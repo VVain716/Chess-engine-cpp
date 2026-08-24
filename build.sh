@@ -4,8 +4,13 @@ set -e
 echo "=== [1/2] Compiling chess-uci binary for Linux ==="
 mkdir -p lichess/engines
 
+STATIC_FLAGS=""
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    STATIC_FLAGS="-static-libstdc++ -static-libgcc"
+fi
+
 # Compile pure C++ core and UCI interface with -O3
-g++ -std=c++20 -O3 -Wall -Wextra -Iinclude \
+g++ -std=c++20 -O3 -Wall -Wextra $STATIC_FLAGS -Iinclude \
     src/core/Types.cpp \
     src/core/Board.cpp \
     src/core/MoveGen.cpp \
