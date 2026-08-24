@@ -132,8 +132,8 @@ int main() {
     if (command == "uci") {
       std::cout << "id name Chess-Engine-Cpp\n";
       std::cout << "id author Ved Vainateya\n";
-      std::cout << "option name Threads type spin default 1 min 1 max 1\n";
-      std::cout << "option name Hash type spin default 16 min 1 max 1024\n";
+      std::cout << "option name Threads type spin default 1 min 1 max 512\n";
+      std::cout << "option name Hash type spin default 16 min 1 max 4096\n";
       std::cout << "option name Move Overhead type spin default 10 min 0 max 5000\n";
       std::cout << "option name Ponder type check default false\n";
       std::cout << "option name UCI_ShowWDL type check default false\n";
@@ -153,6 +153,9 @@ int main() {
           if (iss >> mb) {
             chess::Search::resize_tt(mb);
           }
+        } else if (opt_name == "Threads") {
+          int th = 1;
+          iss >> th;
         }
       }
     } else if (command == "ucinewgame") {
